@@ -1,0 +1,93 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --text: #494949;
+    --text2: #5c5c5c;
+    --blue: #0471ff;
+    --bodyPadding: 10px;
+    --green: #97d47a;
+    --pink: #d47ab9;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    border-radius: 10px;
+    /* 圆角设置 */
+    overflow: hidden;
+    /* 隐藏溢出的内容 */
+}
+
+#app {
+    border-radius: 10px;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+
+::-webkit-scrollbar-thumb {
+    background: #bfbfbf;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #bfbfbf;
+}
+
+::-webkit-scrollbar-corner {
+    background: #bfbfbf;
+}
+
+.a-link {
+    cursor: pointer;
+    text-decoration: none;
+    color: #0471ff;
+}
+
+.my-tab {
+    .el-tabs__nav-wrap {
+        &::after {
+            background: none;
+        }
+    }
+
+    .el-tabs__header {
+        margin: 0;
+    }
+}
+
+.my-collapse {
+    .el-collapse-item__context {
+        padding-bottom: 0;
+    }
+
+    .el-collapse-item__wrap,
+    .el-collapse,
+    .el-collapse-item__header {
+        border-bottom: none;
+    }
+}
+
+.el-message-box {
+    -webkit-app-region: no-drag;
+}
+
+.top-panel {
+    .el-form-item {
+        margin-bottom: 0;
+    }
+
+    .second-row {
+        margin-top: 5px;
+    }
+}
