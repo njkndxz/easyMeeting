@@ -4,7 +4,7 @@ import path from 'path'
 import { app, screen } from 'electron'
 
 const NODE_ENV = process.env.NODE_ENV
-const ffmpegPath = "/assets/ffmpeg.exe"
+const ffmpegPath = "/resources/ffmpeg.exe"
 
 const getResourcePath = () => {
     const resourcePath = app.getAppPath()
@@ -23,7 +23,7 @@ const getFFmpegPath = () => {
 const getScreenInfo = (displayId) => {
     const displays = screen.getAllDisplays()
     return displays.find(item => {
-        return item.id === displayId
+        return item.id == displayId
     })
 }
 
@@ -34,18 +34,20 @@ export const startRecording = (_sender, displayId, mic) => {
     sender = _sender
     currentTime = 0
 
-    let filePath = "C:/Users/Administrator/easyMeeting/"
+    let filePath = "E:/EasyMeeting/"
     filePath = filePath + new Date().getTime() + "_temp.mp4"
 
     const { bounds, workArea } = getScreenInfo(displayId)
+
     const ffmpeg = getFFmpegPath()
+    
     let args = [
         //视频输入
         '-f', 'gdigrab', //gdigrab指定使用 Windows GDI 屏幕捕获设备
-        '-draw mouse', '1', // 捕获录屏的时候的鼠标指针 1显示 0隐藏
-        'framerate', '30', // 设置视频捕获频率
+        '-draw_mouse', '1', // 捕获录屏的时候的鼠标指针 1显示 0隐藏
+        '-framerate', '30', // 设置视频捕获频率
         '-offset_x', `${bounds.x}`, // 设置屏幕坐标
-        '-offset_y', 'e',
+        '-offset_y', '0',
         '-video_size', `${workArea.width}x${workArea.height}`,
         '-i', 'desktop', // 输入源为整个桌面(可替换为title-窗口标题，捕获特定窗口)
     ]
@@ -63,7 +65,7 @@ export const startRecording = (_sender, displayId, mic) => {
         '-crf', '18',
         '-g', '60',
         // 每2秒一个关键帧
-        '-x264 - params', 'nal - hrd=cbr: force - cfr=1',//恒定帧率
+        '-x264-params', 'nal-hrd=cbr:force-cfr=1',//恒定帧率
         //音频编码
         '-c:a', 'aac',
         '-b:a', '192k',
@@ -75,7 +77,7 @@ export const startRecording = (_sender, displayId, mic) => {
         '-movflags', 'frag_keyframe+empty_moov+faststart',
         '-flush_packets', '1',
         '-fflags', '+genpts',
-        '-max_interleave_delta', 'e',//减少交错延迟
+        '-max_interleave_delta', '0',//减少交错延迟
         filePath
     ]
 
@@ -99,6 +101,7 @@ export const startRecording = (_sender, displayId, mic) => {
     })
 
     ffmpegProcess.on("error", (err) =>{
+        console.log(err);
         ffmpegProcess = null
     })
 

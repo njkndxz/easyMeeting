@@ -16,6 +16,7 @@ declare module 'vue' {
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElImage: typeof import('element-plus/es')['ElImage']
     Header: typeof import('./src/components/Header.vue')['default']
+    MicIcon: typeof import('./src/components/MicIcon.vue')['default']
     NoData: typeof import('./src/components/NoData.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

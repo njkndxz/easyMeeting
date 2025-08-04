@@ -11,7 +11,7 @@
 <script setup>
 import { getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-
+import Cover from '@/components/Cover.vue'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -21,7 +21,7 @@ const screenDisplayId = ref()
 const screenSources = ref([])
 const emit = defineEmits(['selectScreenDisplayId'])
 
-const selectSource = async (source) => {
+const selectSource = (source) => {
     screenDisplayId.value = source.displayId
     emit("selectScreenDisplayId", screenDisplayId.value)
 }

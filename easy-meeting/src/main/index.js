@@ -6,14 +6,6 @@ import { saveWindow } from './windowProxy'
 import { onGetScreenSource, onLoginOrRegister, onLoginSuccess, onOpenLocalFile, onStartRecording, onStopRecording, onWinTitleOp } from './ipc'
 
 
-function handleMenuAndDevtool(mainWindow) {
-  const devtools = new BrowserWindow();
-  // 解决 Windows 无法正常打开开发者工具的问题
-  mainWindow.webContents.setDevToolsWebContents(devtools.webContents);
-  // 打开开发者工具
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
-}
-
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -31,7 +23,8 @@ function createWindow() {
     }
   })
 
-  handleMenuAndDevtool(mainWindow)
+  !app.isPackaged && mainWindow.webContents.openDevTools({ mode: 'detach' });
+
   saveWindow("main", mainWindow)
 
   mainWindow.on('ready-to-show', () => {

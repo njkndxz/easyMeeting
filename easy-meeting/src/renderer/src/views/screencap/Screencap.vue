@@ -6,7 +6,7 @@
                 <div>录制设置</div>
                 <div class="device-panel">
                     <div class="device-title">音频输入</div>
-                    <!-- <MicIcon v-model="micInfo" ref="micInfoRef" @click="openOrClose"></MicIcon> -->
+                    <MicIcon v-model="micInfo" ref="micInfoRef" @click="openOrClose"></MicIcon>
                 </div>
                 <div class="record-btn">
                     <el-button class="btn" type="primary" size="large" @click="startRecord">开始录制</el-button>
@@ -44,10 +44,18 @@
 import { getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ScreenSelect from './ScreenSelect.vue'
+import MicIcon from '@/components/MicIcon.vue'
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
+
+const micInfoRef = ref()
+const micInfo = ref()
+const openOrClose = () => {
+    micInfoRef.value.toggleMic()
+}
+
 
 //0初始化 1开始录制 2录制中 3停止录制中 4停止录制
 const recordStatus = ref(0)
@@ -70,7 +78,7 @@ const stopRecord = () => {
 }
 
 const recordTime = ref(1)
-const filePath = ref()
+const filePath = ref('E:/EasyMeeting/')
 const listenRecordTime = () => {
     window.electron.ipcRenderer.on('recordTime', (e, _recordTime) => {
         recordTime.value = _recordTime
@@ -97,7 +105,6 @@ const openFile = () => {
 const restart = () => {
     recordStatus.value = 0
     recordTime.value = 0
-    startRecord()
 }
 
 </script>
@@ -176,13 +183,13 @@ const restart = () => {
             cursor: not-allowed;
         }
 
-        .fill-panel {
+        .file-panel {
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 10px;
 
-            .fill-path {
+            .file-path {
                 border: 1px solid #ddd;
                 border-radius: 3px;
                 padding: 3px 5px;
