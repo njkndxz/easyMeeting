@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { saveWindow } from './windowProxy'
-import { onGetScreenSource, onLoginOrRegister, onLoginSuccess, onWinTitleOp } from './ipc'
+import { onGetScreenSource, onLoginOrRegister, onLoginSuccess, onOpenLocalFile, onStartRecording, onStopRecording, onWinTitleOp } from './ipc'
 
 
 function handleMenuAndDevtool(mainWindow) {
@@ -83,6 +83,9 @@ onLoginOrRegister();
 onWinTitleOp();
 onLoginSuccess();
 onGetScreenSource();
+onStartRecording();
+onStopRecording();
+onOpenLocalFile();
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.

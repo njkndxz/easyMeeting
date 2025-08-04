@@ -1,7 +1,8 @@
-import { ipcMain, BrowserWindow, desktopCapturer } from "electron"
+import { ipcMain, BrowserWindow, desktopCapturer, shell } from "electron"
 import { getWindow } from "./windowProxy"
 import { initWs } from "./wsClient"
 import * as store from './store'
+import { startRecording, stopRecording } from "./recording"
 
 export const onLoginOrRegister = () => {
     ipcMain.handle("loginOrRegister", (e, isLogin) => {
@@ -25,7 +26,7 @@ export const onWinTitleOp = () => {
         // 分类型操作
         switch (action) {
             case "close":
-                if(data.closeType === 0) {
+                if (data.closeType === 0) {
                     win.forceClose = data.forceClose();
                     win.close();
                 } else {
@@ -58,7 +59,7 @@ export const onLoginSuccess = () => {
 
         store.initUserId(userInfo.userId);
         store.setData("userInfo", userInfo);
-        
+
         initWs(wsUrl + userInfo.token);
     });
 }
@@ -76,5 +77,24 @@ export const onGetScreenSource = () => {
             displayId: source.display_id,
             thumbnail: source.thumbnail.toDataURL()
         }));
+    });
+}
+
+export const onStartRecording = () => {
+    ipcMain.handle("startRecording", (e, { displayId, mic }) => {
+        const sender = e.sender
+        startRecording(sender, displayId, mic)
+    });
+}
+
+export const onStopRecording = () => {
+    ipcMain.handle("stopRecording", () => {
+        stopRecording()
+    });
+}
+
+export const onOpenLocalFile = () => {
+    ipcMain.on("openLocalFile", (e, { localFilePath, folder = false }) => {
+        folder ? shell.openPath(localFilePath) : shell.showItemInFolder(localFilePath)
     });
 }

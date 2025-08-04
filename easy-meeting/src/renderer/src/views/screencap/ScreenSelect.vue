@@ -11,7 +11,6 @@
 <script setup>
 import { getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { mitter } from '@/eventbus/eventBus'
 
 
 const { proxy } = getCurrentInstance()
@@ -38,7 +37,10 @@ const getScreen = async () => {
     screenDisplayId.value = screenSources.value[0].displayId
     emit("selectScreenDisplayId", screenDisplayId.value)
 }
-getScreen()
+
+onMounted(() => {
+    getScreen()
+})
 </script>
 
 <style lang="scss" scoped>
