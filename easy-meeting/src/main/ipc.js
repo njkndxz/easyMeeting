@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from "electron"
+import { ipcMain, BrowserWindow, desktopCapturer } from "electron"
 import { getWindow } from "./windowProxy"
 import { initWs } from "./wsClient"
 import * as store from './store'
@@ -60,5 +60,21 @@ export const onLoginSuccess = () => {
         store.setData("userInfo", userInfo);
         
         initWs(wsUrl + userInfo.token);
+    });
+}
+
+export const onGetScreenSource = () => {
+    ipcMain.handle("getScreenSource", async (event, opts) => {
+        // 获取整个屏幕
+        const sources = await desktopCapturer.getSources(opts)
+        return sources.filter(source => {
+            const size = source.thumbnail.getSize()
+            return size.width > 10 && size.height > 10
+        }).map(source => ({
+            id: source.id,
+            name: source.name,
+            displayId: source.display_id,
+            thumbnail: source.thumbnail.toDataURL()
+        }));
     });
 }

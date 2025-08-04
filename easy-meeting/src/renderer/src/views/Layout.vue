@@ -35,7 +35,7 @@ import { getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { useContactStore } from '@/stores/UserContactStore'
-import { mitter } from '@/eventbus/eventbus'
+import { mitter } from '@/eventbus/eventBus'
 
 const contactStore = useContactStore()
 const userInfoStore = useUserInfoStore()

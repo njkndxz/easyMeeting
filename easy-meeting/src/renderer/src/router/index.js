@@ -6,15 +6,15 @@ const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
     routes: [
         {
-            path: "/",
+            path: "/login",
             name: "login",
             component: () => import('@/views/login/Login.vue')
         },
         {
-            path: "/home",
+            path: "/",
             name: "home",
             component: () => import('@/views/Layout.vue'),
-            redirect: "/meetingMain",
+            redirect: "/screencap",
             children: [
                 {
                     path: "/meetingMain",

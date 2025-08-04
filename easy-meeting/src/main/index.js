@@ -3,7 +3,16 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { saveWindow } from './windowProxy'
-import { onLoginOrRegister, onLoginSuccess, onWinTitleOp } from './ipc'
+import { onGetScreenSource, onLoginOrRegister, onLoginSuccess, onWinTitleOp } from './ipc'
+
+
+function handleMenuAndDevtool(mainWindow) {
+  const devtools = new BrowserWindow();
+  // 解决 Windows 无法正常打开开发者工具的问题
+  mainWindow.webContents.setDevToolsWebContents(devtools.webContents);
+  // 打开开发者工具
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
+}
 
 function createWindow() {
   // Create the browser window.
@@ -22,6 +31,7 @@ function createWindow() {
     }
   })
 
+  handleMenuAndDevtool(mainWindow)
   saveWindow("main", mainWindow)
 
   mainWindow.on('ready-to-show', () => {
@@ -33,7 +43,7 @@ function createWindow() {
   const contextMenu = [
     {
       label: '退出',
-      click: function() {
+      click: function () {
         app.quit();
       }
     }
@@ -62,17 +72,17 @@ function createWindow() {
   mainWindow.on("maximize", () => {
     mainWindow.webContents.send("winIsMax", true);
   })
-  
+
   mainWindow.on("unmaximize", () => {
     mainWindow.webContents.send("winIsMax", false);
   })
-  
+
 }
 
 onLoginOrRegister();
 onWinTitleOp();
 onLoginSuccess();
-
+onGetScreenSource();
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
