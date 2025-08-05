@@ -14,7 +14,7 @@ const router = createRouter({
             path: "/",
             name: "home",
             component: () => import('@/views/Layout.vue'),
-            redirect: "/screencap",
+            redirect: "/setting",
             children: [
                 {
                     path: "/meetingMain",
@@ -38,6 +38,14 @@ const router = createRouter({
                     component: () => import('@/views/screencap/Screencap.vue'),
                     meta: {
                         code: "screencap"
+                    }
+                },
+                {
+                    path: "/setting",
+                    name: "setting",
+                    component: () => import('@/views/setting/Setting.vue'),
+                    meta: {
+                        code: "setting"
                     }
                 }
             ]

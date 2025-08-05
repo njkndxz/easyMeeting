@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { saveWindow } from './windowProxy'
-import { onGetScreenSource, onLoginOrRegister, onLoginSuccess, onOpenLocalFile, onStartRecording, onStopRecording, onWinTitleOp } from './ipc'
+import { onChangeLocalFolder, onGetScreenSource, onGetSysSetting, onLoginOrRegister, onLoginSuccess, onLogout, onOpenLocalFile, onSaveSysSetting, onStartRecording, onStopRecording, onWinTitleOp } from './ipc'
 
 
 function createWindow() {
@@ -79,6 +79,10 @@ onGetScreenSource();
 onStartRecording();
 onStopRecording();
 onOpenLocalFile();
+onSaveSysSetting();
+onGetSysSetting();
+onChangeLocalFolder();
+onLogout();
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.

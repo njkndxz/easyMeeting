@@ -1,8 +1,9 @@
-import { ipcMain, BrowserWindow, desktopCapturer, shell } from "electron"
+import { ipcMain, BrowserWindow, desktopCapturer, shell, dialog } from "electron"
 import { getWindow } from "./windowProxy"
-import { initWs } from "./wsClient"
+import { initWs, logout } from "./wsClient"
 import * as store from './store'
 import { startRecording, stopRecording } from "./recording"
+import { getSysSetting, saveSysSetting } from "./sysSetting"
 
 export const onLoginOrRegister = () => {
     ipcMain.handle("loginOrRegister", (e, isLogin) => {
@@ -96,5 +97,38 @@ export const onStopRecording = () => {
 export const onOpenLocalFile = () => {
     ipcMain.on("openLocalFile", (e, { localFilePath, folder = false }) => {
         folder ? shell.openPath(localFilePath) : shell.showItemInFolder(localFilePath)
+    });
+}
+
+export const onSaveSysSetting = () => {
+    ipcMain.handle("saveSysSetting", (e, sysSetting) => {
+        saveSysSetting(sysSetting)
+    });
+}
+
+export const onGetSysSetting = () => {
+    ipcMain.handle("getSysSetting", (e) => {
+        return getSysSetting()
+    });
+}
+
+export const onChangeLocalFolder = () => {
+    ipcMain.handle("changeLocalFolder", async (e, {localFilePath}) => {
+        const options = {
+            properties: ["openDirectory"],
+            defaultPath: localFilePath
+        }
+        const result = await dialog.showOpenDialog(options)
+        if(result.canceled) {
+            return
+        }
+
+        return result.filePaths[0].replaceAll('//', '\\')
+    });
+}
+
+export const onLogout = () => {
+    ipcMain.handle("logout", (e) => {
+        logout()
     });
 }

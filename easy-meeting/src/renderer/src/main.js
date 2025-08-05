@@ -13,6 +13,7 @@ import request from '@/utils/Request'
 import Api from '@/utils/Api'
 import * as Utils from '@/utils/Utils'
 import * as Verify from '@/utils/Verify'
+import { Confirm, Alert } from '@/utils/Confirm'
 
 import Header from "@/components/Header.vue"
 import TitleBar from '@/components/TitleBar.vue'
@@ -38,6 +39,8 @@ app.config.globalProperties.Request = request
 app.config.globalProperties.Api = Api
 app.config.globalProperties.Utils = Utils
 app.config.globalProperties.Verify = Verify
+app.config.globalProperties.Confirm = Confirm
+app.config.globalProperties.Alert = Alert
 
 app.mount('#app')
 
