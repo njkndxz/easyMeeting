@@ -1,9 +1,10 @@
 import { ipcMain, BrowserWindow, desktopCapturer, shell, dialog } from "electron"
-import { getWindow } from "./windowProxy"
+import { delWindow, getWindow, saveWindow } from "./windowProxy"
 import { initWs, logout } from "./wsClient"
 import * as store from './store'
 import { startRecording, stopRecording } from "./recording"
 import { getSysSetting, saveSysSetting } from "./sysSetting"
+import { join } from 'path'
 
 export const onLoginOrRegister = () => {
     ipcMain.handle("loginOrRegister", (e, isLogin) => {
@@ -113,13 +114,13 @@ export const onGetSysSetting = () => {
 }
 
 export const onChangeLocalFolder = () => {
-    ipcMain.handle("changeLocalFolder", async (e, {localFilePath}) => {
+    ipcMain.handle("changeLocalFolder", async (e, { localFilePath }) => {
         const options = {
             properties: ["openDirectory"],
             defaultPath: localFilePath
         }
         const result = await dialog.showOpenDialog(options)
-        if(result.canceled) {
+        if (result.canceled) {
             return
         }
 
@@ -131,4 +132,109 @@ export const onLogout = () => {
     ipcMain.handle("logout", (e) => {
         logout()
     });
+}
+
+const openWindow = ({
+    windowId, title = '详情', path, width = 960, height = 720, data, maximizable = false
+}) => {
+    let newWindow = getWindow(windowId)
+    const paramsArray = []
+    if (data && Object.keys(data).length > 0) {
+        path = path.endsWith("?") ? path : path + "?"
+        for (let i in data) {
+            paramsArray.push(`${i}=${encodeURIComponent(data[i])}`)
+        }
+
+        path = path + paramsArray.join('&')
+    }
+
+    if (!newWindow) {
+        newWindow = new BrowserWindow({
+            width,
+            height,
+            minHeight: height,
+            minWidth: width,
+            show: false,
+            autoHideMenuBar: true,
+            frame: false,
+            fullscreenable: false,
+            resizable: maximizable,
+            maximizable,
+            ...(process.platform === 'linux' ? { icon } : {}),
+            webPreferences: {
+                preload: join(__dirname, '../preload/index.js'),
+                sandbox: false
+            }
+        })
+
+        saveWindow(windowId, newWindow)
+
+        if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+            newWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html#${path}`)
+        } else {
+            newWindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: `${path}` })
+        }
+
+        newWindow.on('ready-to-show', () => {
+            newWindow.show()
+        })
+
+        newWindow.on('close', (event) => {
+            // 关闭会议窗口
+            if (newWindow.forceClose !== undefined && !newWindow.forceClose) {
+                preCloseWindow(windowId)
+                event.preventDefault()
+            }
+        })
+
+        newWindow.on('closed', () => {
+            closeWindow(windowId)
+            delWindow(windowId)
+        })
+
+        newWindow.on("maximize", () => {
+            newWindow.webContents.send("winIsMax", true)
+        })
+
+        newWindow.on("unmaximize", () => {
+            newWindow.webContents.send("winIsMax", false)
+        })
+    } else {
+        if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+            newWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html#${path}`)
+        } else {
+            newWindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: `${path}` })
+        }
+
+        newWindow.show()
+        newWindow.setSkipTaskbar(false)
+    }
+}
+
+const closeWindow = (windowId) => {
+    const mainWindow = getWindow("main")
+    if (mainWindow) {
+        mainWindow.webContents.send('closeWindow', { windowId })
+    }
+}
+
+const preCloseWindow = (windowId) => {
+    const win = getWindow(windowId)
+    if (win) {
+        win.webContents.send("preCloseWindow")
+    }
+}
+
+export const onOpenWindow = () => {
+    ipcMain.on("openWindow", (e, { title, windowId, path, width, height, data, maximizable }) => {
+        openWindow({
+            title,
+            windowId,
+            path,
+            width,
+            height,
+            data,
+            maximizable
+        })
+    })
 }

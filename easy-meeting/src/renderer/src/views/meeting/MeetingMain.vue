@@ -26,6 +26,7 @@
         </div>
         <TitleBar :showMax="false"></TitleBar>
     </div>
+    <QuickMeeting ref="quickMeetingRef" @joinMeeting="joinMeetingHandler"></QuickMeeting>
 </template>
 
 <script setup>
@@ -33,12 +34,33 @@ import { getCurrentInstance, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import Today from './Today.vue'
+import QuickMeeting from './QuickMeeting.vue'
 
 const meetingStore = useMeetingStore()
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
+
+const quickMeetingRef = ref()
+const quickMeeting = () => {
+    quickMeetingRef.value.show()
+}
+
+const joinMeetingHandler = (addType = 0, screenId = '') => {
+    window.electron.ipcRenderer.send("openWindow", {
+        title: '会议详情',
+        windowId: 'meeting',
+        path: '/meeting',
+        data: {
+            addType,
+            screenId
+        },
+        width: 1310,
+        height: 800,
+        maximizable: true
+    })
+}
 
 </script>
 
