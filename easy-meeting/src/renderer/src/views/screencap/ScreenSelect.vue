@@ -1,6 +1,6 @@
 <template>
     <div class="screen-source-list">
-        <div :class="['source-item', screenDisplayId == item.displayId ? 'active' : '']" v-for="item in screenSources"
+        <div :class="['source-item', screenDisplayId == item.displayId ? 'active' : '']" v-for="item in screenSources" :key="item.name"
             @click="selectSource(item)">
             <Cover :source="item.thumbnail" borderRadius="0px"></Cover>
             <div class="name">{{ item.name }}</div>

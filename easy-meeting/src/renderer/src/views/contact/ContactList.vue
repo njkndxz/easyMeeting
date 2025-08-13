@@ -5,7 +5,7 @@
     </div>
 
     <div class="contact-list">
-        <div class="contact-item" v-for="item in contactList">
+        <div class="contact-item" v-for="item in contactList" :key="item.contactId">
             <Avatar :avatar="item.contactId"></Avatar>
             <div class="nick-name">{{ item.nickName }}</div>
 

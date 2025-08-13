@@ -6,7 +6,7 @@ const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
     routes: [
         {
-            path: "/login",
+            path: "/",
             name: "login",
             component: () => import('@/views/login/Login.vue')
         },
@@ -16,7 +16,7 @@ const router = createRouter({
             component: () => import('@/views/meeting/detail/Meeting.vue')
         },
         {
-            path: "/",
+            path: "/home",
             name: "home",
             component: () => import('@/views/Layout.vue'),
             redirect: "/meetingMain",

@@ -4,7 +4,11 @@ export const useMeetingStore = defineStore('meetingInfo', {
     state: () => {
         return {
             lastUpdate: null,
-            inMeeting: false
+            inMeeting: false,
+            noReadChatCount: 0,
+            chatOpen: false,
+            allMemberList: [],
+            memberList: []
         }
     },
     getters: {
@@ -14,6 +18,24 @@ export const useMeetingStore = defineStore('meetingInfo', {
         updateMeeting(inMeeting) {
             this.lastUpdate = new Date().getTime();
             this.inMeeting = inMeeting;
+        },
+        addnoReadChatCount() {
+            if(this.chatOpen) {
+                return
+            }
+            this.noReadChatCount++
+        },
+        updateChatOpen(open) {
+            if(open) {
+                this.noReadChatCount = 0
+            }
+            this.chatOpen = open
+        },
+        setMemberList(memberList) {
+            this.memberList = memberList
+        },
+        setAllMemberList(allMemberList) {
+            this.allMemberList = allMemberList
         }
     }
 })

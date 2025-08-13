@@ -1,6 +1,6 @@
 <template>
     <div class="contact-apply-list">
-        <div class="contact-item" v-for="item in contactApplyList">
+        <div class="contact-item" v-for="item in contactApplyList" :key="item.applyUserId">
             <Avatar :avatar="item.applyUserId"></Avatar>
             <div class="nick-name">{{ item.nickName }}</div>
             <div class="result-tip" v-if="item.status !== 0">{{ item.statusName }}</div>

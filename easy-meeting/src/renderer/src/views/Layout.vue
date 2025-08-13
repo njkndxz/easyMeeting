@@ -15,7 +15,7 @@
                 </div>
             </div>
             <div class="bottom-menus">
-                <template v-for="item in leftBottomMenus">
+                <template v-for="item in leftBottomMenus" :key="item.name">
                     <div :class="['menu-item', item.codes.includes(route.meta.code) ? 'active' : '']"
                         v-if="!item.onlyAdmin || (item.onlyAdmin && userInfoStore.userInfo.admin)"
                         @click="jumpMenu(item)">

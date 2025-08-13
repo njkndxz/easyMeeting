@@ -22,14 +22,14 @@ export const wsCheck = () => {
 }
 
 export const connectWs = () => {
-    if(ws && ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+    if (ws && ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
         console.log('已经连接上了');
         return;
     }
     console.log(`尝试连接....(重试次数:${retryCount}/${maxRetries}),连接地址:${wsUrl}`);
     ws = new WebSocket(wsUrl);
     ws.onopen = () => {
-        if(retryCount > 0 && wsCheck()) {
+        if (retryCount > 0 && wsCheck()) {
             const mainWindow = getWindow("main");
             mainWindow.webContent.send("reconnect", true);
         }
@@ -45,9 +45,21 @@ export const connectWs = () => {
         const meetingWin = getWindow("meeting");
         const mainWindow = getWindow("main");
         switch (data.messageType) {
+            case 1: // 加入房间
+                break;
+            case 2: // 发送peer
+                break;
+            case 3: // 退出房间
+                if (mainWindow && (data.messageType == 2 || data.messageType == 3)) {
+                    mainWindow.webContents.send("mainMessage", data)
+                }
+                if (meetingWin) {
+                    meetingWin.webContents.send("meetingMessage", data)
+                }
+                break;
             case 8: // 好友申请
             case 12: // 处理好友申请
-                if(!mainWindow) {
+                if (!mainWindow) {
                     return;
                 }
                 mainWindow.webContents.send("mainMessage", data)
@@ -68,14 +80,14 @@ export const connectWs = () => {
 }
 
 export const handleReconnect = () => {
-    if(!needReconnect) {
+    if (!needReconnect) {
         return;
     }
 
-    if(retryCount >= maxRetries) {
+    if (retryCount >= maxRetries) {
         console.error('已经达到最大重试次数，停止重试');
         retryCount = 0;
-        if(wsCheck()) {
+        if (wsCheck()) {
             logout(false);
         }
         return;
@@ -83,9 +95,9 @@ export const handleReconnect = () => {
 
     retryCount += 1;
     const delay = retryInterval * Math.pow(1.5, retryCount - 1);
-    console.log(`连接断开,等待${delay/1000}秒后重试`);
+    console.log(`连接断开,等待${delay / 1000}秒后重试`);
 
-    if(wsCheck()) {
+    if (wsCheck()) {
         const mainWindow = getWindow("main");
         mainWindow.webContent.send("reconnect", true);
     }
@@ -95,7 +107,7 @@ export const handleReconnect = () => {
     }, delay);
 }
 
-export const logout = ({closeWs = true}) => {
+export const logout = ({ closeWs = true }) => {
     const login_width = 375;
     const login_hight = 365;
     const mainWindow = getWindow("main");
@@ -103,7 +115,7 @@ export const logout = ({closeWs = true}) => {
     mainWindow.setMinimumSize(login_width, login_hight)
     mainWindow.setResizable(false);
 
-    if(closeWs) {
+    if (closeWs) {
         needReconnect = false;
         ws.close();
     }
@@ -111,7 +123,7 @@ export const logout = ({closeWs = true}) => {
     const windows = getWindowManage();
     for (const winKey in windows) {
         const win = windows.get(winKey);
-        if(winKey !== "main") {
+        if (winKey !== "main") {
             win.close();
         }
     }
@@ -121,7 +133,7 @@ export const logout = ({closeWs = true}) => {
 
 export const startHeartBeat = () => {
     heartBeatTimer = setInterval(() => {
-        if(ws?.readyState === WebSocket.OPEN) {
+        if (ws?.readyState === WebSocket.OPEN) {
             // ws.send("ping");
         }
     }, HEARTBEAT_INTERVAL);
@@ -134,7 +146,7 @@ export const cleanHeartBeatTimer = () => {
 }
 
 export const sendWsData = (data) => {
-    if(!ws) {
+    if (!ws) {
         return;
     }
 
