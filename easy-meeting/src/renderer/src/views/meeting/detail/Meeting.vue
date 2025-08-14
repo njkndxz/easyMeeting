@@ -7,7 +7,7 @@
         <template v-if="inited">
             <div class="meeting-panel">
                 <div :class="['layout', LAYOUT_CLASS[layoutType]]">
-                    <MemberList :deviceInfo="deviceInfo"></MemberList>
+                    <MemberList :deviceInfo="deviceInfo" @exitMeeting="forceExit"></MemberList>
                     <div v-show="layoutType !== 0">
                         
                     </div>
@@ -81,6 +81,10 @@ const closeMeeting = () => {
             titlebarRef.value.custClose()
         }
     })
+}
+
+const forceExit = () => {
+    titlebarRef.value.custClose()
 }
 
 onMounted(() => {

@@ -397,6 +397,24 @@ const onPeerConnection = async ({ sendUserId, receiveUserId, messageContent }) =
     }
 }
 
+const emit = defineEmits(['exitMeeting', 'selectMember'])
+const onUserLeave = (messageContent) => {
+    const { exitUserId, meetingMemberList } = JSON.parse(messageContent)
+    if(userInfoStore.userInfo.userId == exitUserId) {
+        emit('exitMeeting')
+        return
+    }
+
+    memberList.value = memberList.value.filter(item => item.userId != exitUserId)
+    meetingStore.setAllMemberList(meetingMemberList)
+    meetingStore.setMemberList(memberList.value)
+    peerConnectionMap.delete(exitUserId)
+}
+
+const meetingFinish = () => {
+    emit('exitMeeting')
+}
+
 const initMeetingListener = () => {
     window.electron.ipcRenderer.on("meetingMessage", (e, { sendUserId, receiveUserId, messageContent, messageType }) => {
         switch (messageType) {
@@ -406,7 +424,11 @@ const initMeetingListener = () => {
             case 2:     // 建立peerConnection
                 onPeerConnection({ sendUserId, receiveUserId, messageContent })
                 break;
-            case 3:
+            case 3: // 退出会议
+                onUserLeave(messageContent)
+                break;
+            case 4:
+                meetingFinish()
                 break;
             default:
                 break;
