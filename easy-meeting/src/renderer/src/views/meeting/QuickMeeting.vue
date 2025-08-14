@@ -1,7 +1,7 @@
 <template>
     <Dialog :show="dialogConfig.show" :title="dialogConfig.title" :buttons="dialogConfig.buttons" width="400px"
         :showCancel="false" @close="dialogConfig.show = false">
-        <el-form :model="formData" :rules="rules" ref="formDataref" label-width="80px" @submit.prevent>
+        <el-form :model="formData" :rules="rules" ref="formDataRef" label-width="80px" @submit.prevent>
             <!--input输入-->
             <el-form-item label="会议号" prop="">
                 <el-radio-group v-model="formData.meetingNoType">

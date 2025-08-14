@@ -259,6 +259,82 @@ const joinMeeting = async (videoOpen) => {
     }
 }
 
+const peerConnectionMap = new Map()
+const SIGNAL_TYPE_OFFER = 'offer'
+const SIGNAL_TYPE_ANSWER = 'answer'
+const SIGNAL_TYPE_CANDIDATE = 'candidate'
+
+const sendPeerMessage = ({ sendUserId, receiveUserId, signalType, signalData }) => {
+    window.electron.ipcRenderer.send('sendPeerConnection', {
+        sendUserId,
+        receiveUserId,
+        signalType,
+        signalData: JSON.stringify(signalData)
+    })
+}
+
+const createPeerConnection = (member) => {
+    let peerConnection = peerConnectionMap.get(member.userId)
+    if (peerConnection) {
+        return peerConnection
+    }
+
+    peerConnection = new RTCPeerConnection({
+        sdpSemantics: 'unified-plan', // 明确现代化标准
+        codecs: { video: 'VP8' }, // 强制优先使用VP8
+        bundlePolicy: 'balanced', // 优化媒体传输通道绑定策略
+        rtcpMuxPolicy: 'require', // 强制RTP/RTCP 多路复用
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    })
+
+    if (!props.deviceInfo.cameraEnable) {
+        peerConnection.addTransceiver('video', {
+            direction: 'recvonly'
+        })
+    }
+
+    if (!props.deviceInfo.micEnable) {
+        peerConnection.addTransceiver('audio', {
+            direction: 'recvonly'
+        })
+    }
+
+    peerConnection.onicecandidate = (e) => {
+        if (e.candidate) {
+            sendPeerMessage({
+                sendUserId: userInfoStore.userInfo.userId,
+                signalType: SIGNAL_TYPE_CANDIDATE,
+                signalData: e.candidate,
+                receiveUserId: member.userId,
+            })
+        }
+    }
+
+    peerConnection.ontrack = (event) => {
+        const remoteVideo = document.querySelector("#member_" + member.userId)
+        remoteVideo.srcObject = event.streams[0]
+    }
+
+    localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream)
+    })
+
+    peerConnectionMap.set(member.userId, peerConnection)
+
+    return peerConnection
+}
+
+const sendOffer = async (peerConnection, sendUserId, receiveUserId) => {
+    let offer = await peerConnection.createOffer({ iceRestart: true })
+    await peerConnection.setLocalDescription(offer)
+    sendPeerMessage({
+        sendUserId,
+        receiveUserId,
+        signalType: SIGNAL_TYPE_OFFER,
+        signalData: offer
+    })
+}
+
 const onUserJoin = async (messageContent) => {
     const newMember = messageContent.newMember
     const allMemberList = messageContent.meetingMemberList.sort((a, b) => a.joinTime - b.joinTime)
@@ -271,9 +347,54 @@ const onUserJoin = async (messageContent) => {
     if (newMember.userId != userInfoStore.userInfo.userId) {
         proxy.Message.success(`用户${newMember.nickName}加入了会议`)
         // 建立peerConnection
+        createPeerConnection(newMember)
         return
     }
 
+    memberList.value.forEach((member) => {
+        const peerConnection = createPeerConnection(member)
+        sendOffer(peerConnection, userInfoStore.userInfo.userId, member.userId)
+    })
+}
+
+const onPeerConnection = async ({ sendUserId, receiveUserId, messageContent }) => {
+    if (receiveUserId != userInfoStore.userInfo.userId) {
+        return
+    }
+
+    const signalData = messageContent.signalData ? JSON.parse(messageContent.signalData) : {}
+    const member = memberList.value.find((item) => {
+        return item.userId == sendUserId
+    })
+    const peerConnection = createPeerConnection(member)
+    try {
+        switch (messageContent.signalType) {
+            case SIGNAL_TYPE_OFFER:
+                await peerConnection.setRemoteDescription(signalData)
+                const answer = await peerConnection.createAnswer()
+                await peerConnection.setLocalDescription(answer)
+                sendPeerMessage({
+                    sendUserId: receiveUserId,
+                    receiveUserId: sendUserId,
+                    signalType: SIGNAL_TYPE_ANSWER,
+                    signalData: answer
+                })
+                break;
+            case SIGNAL_TYPE_ANSWER:
+                await peerConnection.setRemoteDescription(signalData)
+                break;
+            case SIGNAL_TYPE_CANDIDATE:
+                if (!peerConnection.remoteDescription) {
+                    return
+                }
+                peerConnection.addIceCandidate(signalData)
+                break;
+            default:
+                break;
+        }
+    } catch (error) {
+        console.error('err', error);
+    }
 }
 
 const initMeetingListener = () => {
@@ -283,6 +404,7 @@ const initMeetingListener = () => {
                 onUserJoin(messageContent)
                 break;
             case 2:     // 建立peerConnection
+                onPeerConnection({ sendUserId, receiveUserId, messageContent })
                 break;
             case 3:
                 break;

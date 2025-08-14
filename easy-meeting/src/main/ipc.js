@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow, desktopCapturer, shell, dialog } from "electron"
 import { delWindow, getWindow, saveWindow } from "./windowProxy"
-import { initWs, logout } from "./wsClient"
+import { initWs, logout, sendWsData } from "./wsClient"
 import * as store from './store'
 import { startRecording, stopRecording } from "./recording"
 import { getSysSetting, saveSysSetting } from "./sysSetting"
@@ -236,5 +236,12 @@ export const onOpenWindow = () => {
             data,
             maximizable
         })
+    })
+}
+
+export const onSendPeerConnection = () => {
+    ipcMain.on('sendPeerConnection', (e, peerData) => {
+        peerData.token = store.getData('userInfo')?.token
+        sendWsData(JSON.stringify(peerData))
     })
 }

@@ -27,6 +27,7 @@
         <TitleBar :showMax="false"></TitleBar>
     </div>
     <QuickMeeting ref="quickMeetingRef" @joinMeeting="joinMeetingHandler"></QuickMeeting>
+    <AddMeeting ref="addMeetingRef" @joinMeeting="joinMeetingHandler"></AddMeeting>
 </template>
 
 <script setup>
@@ -35,12 +36,15 @@ import { useRouter, useRoute } from 'vue-router'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import Today from './Today.vue'
 import QuickMeeting from './QuickMeeting.vue'
+import AddMeeting from './AddMeeting.vue'
 
 const meetingStore = useMeetingStore()
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
+
+const addMeetingRef = ref()
 
 const quickMeetingRef = ref()
 const quickMeeting = () => {
@@ -60,6 +64,10 @@ const joinMeetingHandler = (addType = 0, screenId = '') => {
         height: 800,
         maximizable: true
     })
+}
+
+const addMeeting = (addType) => {
+    addMeetingRef.value.show({ addType })
 }
 
 </script>
