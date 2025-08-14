@@ -36,7 +36,7 @@ const { proxy } = getCurrentInstance()
 const router = useRouter()
 const route = useRoute()
 
-const titlebarRef = ref()
+
 const inited = ref(false)
 const deviceInfo = ref({})
 const layoutType = ref()
@@ -73,12 +73,28 @@ const layoutChangeHandler = (type) => {
     layoutType.value = type
 }
 
+const titlebarRef = ref()
+const closeMeeting = () => {
+    proxy.Confirm({
+        message: '确定要退出会议吗?',
+        okfun: () => {
+            titlebarRef.value.custClose()
+        }
+    })
+}
+
 onMounted(() => {
     mitter.on('layoutChange', layoutChangeHandler)
+
+    window.electron.ipcRenderer.on('preCloseWindow', () => {
+        closeMeeting()
+    })
 })
 
 onUnmounted(() => {
     mitter.off('layoutChange', layoutChangeHandler)
+
+    window.electron.ipcRenderer.removeAllListeners('preCloseWindow')
 })
 </script>
 
