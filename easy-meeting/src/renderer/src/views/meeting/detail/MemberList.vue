@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { computed, getCurrentInstance, nextTick, onMounted, ref } from 'vue'
+import { computed, getCurrentInstance, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
@@ -400,7 +400,7 @@ const onPeerConnection = async ({ sendUserId, receiveUserId, messageContent }) =
 const emit = defineEmits(['exitMeeting', 'selectMember'])
 const onUserLeave = (messageContent) => {
     const { exitUserId, meetingMemberList } = JSON.parse(messageContent)
-    if(userInfoStore.userInfo.userId == exitUserId) {
+    if (userInfoStore.userInfo.userId == exitUserId) {
         emit('exitMeeting')
         return
     }
@@ -430,15 +430,103 @@ const initMeetingListener = () => {
             case 4:
                 meetingFinish()
                 break;
+            case 11: // 用户改变摄像头
+                memberVideoChagne(sendUserId, messageContent)
+                break;
             default:
                 break;
         }
     })
 }
 
+const micSwitchHandler = async (open) => {
+    if (localStream) {
+        localStream.getAudioTracks().forEach(track => track.enabled == open)
+    }
+
+    memberList.value.forEach(member => {
+        const pc = peerConnectionMap.get(member.userId)
+        const sender = pc.getSenders().find(sender => sender.track && sender.track.kind == 'audio')
+        sender.track.enabled = open
+    })
+}
+
+const sendOpenVideoChangeMessage = async (openVideo) => {
+    let result = await proxy.Request({
+        url: proxy.Api.sendOpenVideoChangeMessage,
+        params: {
+            openVideo
+        }
+    })
+
+    if(!result) {
+        return
+    }
+}
+
+const memberVideoChagne = (sendUserId, openVideo) => {
+    if(sendUserId == useUserInfoStore.userInfo.userId) {
+        return
+    }
+
+    const member = memberList.value.find(item => {
+        return item.userId == sendUserId
+    })
+
+    member.openVideo = openVideo
+
+    if(currentSelectUserId.value == member.userId) {
+        emit('selectMember', {
+            srcObject: document.querySelector('#member_' + member.userId).srcObject,
+            userId: member.userId,
+            nickName: member.nickName,
+            openVideo
+        })
+    }
+}
+
+const cameraSwitchHandler = async (open) => {
+    if (cameraStream) {
+        cameraStream.getVideoTracks().forEach(track => track.enabled == open)
+    }
+
+    if (!screenId.value) {
+        return
+    }
+    sendOpenVideoChangeMessage(open)
+
+    // 发送消息告诉其他用户，我已经关闭摄像头
+    if (!screenId.value && open) {
+        const videoTrack = cameraStream.getVideoTracks()[0]
+        videoTrack.enabled = true
+        memberList.value.forEach(member => {
+            const pc = peerConnectionMap.get(member.userId)
+            const sender = pc.getSenders().forEach(sender => {
+                if(sender.track && sender.track.kind == 'video') {
+                    sender.replaceTrack(videoTrack)
+                }
+            })
+
+            sender.track.enabled = open
+        })
+
+        localVideoRef.value.srcObject = cameraStream
+    }
+
+    // 选中操作
+
+}
+
 onMounted(() => {
+    mitter.on('micSwitch', micSwitchHandler)
+    mitter.on('cameraSwitch', cameraSwitchHandler)
     initMeetingListener()
     initLocalStream()
+})
+
+onUnmounted(() => {
+    mitter.off('micSwitch', micSwitchHandler)
+    mitter.off('cameraSwitch', cameraSwitchHandler)
 })
 
 

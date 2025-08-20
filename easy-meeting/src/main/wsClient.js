@@ -41,7 +41,7 @@ export const connectWs = () => {
 
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log('收到ws消息', data);
+        // console.log('收到ws消息', data);
         const meetingWin = getWindow("meeting");
         const mainWindow = getWindow("main");
         switch (data.messageType) {
@@ -58,6 +58,12 @@ export const connectWs = () => {
                 }
                 break;
             case 8: // 好友申请
+            case 11: // 用户开启关闭视频
+                if(!meetingWin) {
+                    return
+                }
+                meetingWin.webContents.send("meetingMessage", data)
+                break;
             case 12: // 处理好友申请
                 if (!mainWindow) {
                     return;

@@ -59,7 +59,7 @@ const dialogConfig = ref({
             type: 'primary',
             text: '确定',
             click: (e) => {
-                submitForm()
+                addMeeting()
             }
         }
     ]
