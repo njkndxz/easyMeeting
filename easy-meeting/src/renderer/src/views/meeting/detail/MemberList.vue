@@ -480,6 +480,7 @@ const memberVideoChagne = (sendUserId, openVideo) => {
             srcObject: document.querySelector('#member_' + member.userId).srcObject,
             userId: member.userId,
             nickName: member.nickName,
+            sex: member.sex,
             openVideo
         })
     }
@@ -495,7 +496,7 @@ const cameraSwitchHandler = async (open) => {
     }
     sendOpenVideoChangeMessage(open)
 
-    // 发送消息告诉其他用户，我已经关闭摄像头
+    // 发送消息告诉其他用户，我已经关闭摄像头，从视频共享切换到摄像头
     if (!screenId.value && open) {
         const videoTrack = cameraStream.getVideoTracks()[0]
         videoTrack.enabled = true
@@ -514,10 +515,55 @@ const cameraSwitchHandler = async (open) => {
     }
 
     // 选中操作
+    if(currentSelectUserId.value && userInfoStore.userInfo.userId) {
+        emit('selectMember', {
+            srcObject: localVideoRef.value.srcObject,
+            userId: userInfoStore.userInfo.userId,
+            nickName: userInfoStore.userInfo.nickName,
+            sex: userInfoStore.userInfo.sex,
+            openVideo
+        })
+    }
+}
 
+// 监听屏幕选择
+const shareScreenHandler = async (_screenId) => {
+    sendOpenVideoChangeMessage((props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) || !proxy.Utils.isEmpty(_screenId))
+    const oldScreenId = screenId.value
+    screenId.value = _screenId
+    if(!proxy.Utils.isEmpty(_screenId) && (!screenStream || oldScreenId !== _screenId)) {
+        await initLocalScreenStream()
+        localStream = screenStream
+    } else if(proxy.Utils.isEmpty(_screenId) && props.deviceInfo.cameraOpen) {
+        localStream = cameraStream
+    }
+
+    localVideoRef.value.srcObject = localStream
+    const videoTrack = localStream ? localStream.getVideoTracks()[0] : null
+    memberList.value.forEach(async (member) => {
+        const peerConnection = peerConnectionMap.get(member.userId)
+        peerConnection.getSenders().forEach(sender => {
+            if(sender.track && sender.track.kind == 'video') {
+                sender.replaceTrack(videoTrack)
+            } else {
+                sender.track.enabled = false
+            }
+        })
+    })
+
+    if(currentSelectUserId.value === userInfoStore.userInfo.userId) {
+        emit('selectMember', {
+            srcObject: localStream,
+            userId: userInfoStore.userInfo.userId,
+            nickName: userInfoStore.userInfo.nickName,
+            sex: userInfoStore.userInfo.sex,
+            openVideo: (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) || !proxy.Utils.isEmpty(_screenId)
+        })
+    }
 }
 
 onMounted(() => {
+    mitter.on('shareScreen', shareScreenHandler)
     mitter.on('micSwitch', micSwitchHandler)
     mitter.on('cameraSwitch', cameraSwitchHandler)
     initMeetingListener()
@@ -525,6 +571,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+    mitter.on('shareScreen', shareScreenHandler)
     mitter.off('micSwitch', micSwitchHandler)
     mitter.off('cameraSwitch', cameraSwitchHandler)
 })

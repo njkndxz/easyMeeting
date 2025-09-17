@@ -44,14 +44,16 @@
             </div>
         </div>
     </div>
+    <SelectScreen ref="selectScreenRef"></SelectScreen>
 </template>
 
 <script setup>
-import { getCurrentInstance, ref } from 'vue'
+import { getCurrentInstance, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { mitter } from '@/eventbus/eventBus'
 import MicIcon from '@/components/MicIcon.vue'
+import SelectScreen from './SelectScreen.vue'
 
 const meetingStore = useMeetingStore()
 
@@ -110,9 +112,29 @@ const cameraClickHandler = () => {
 }
 
 const shareScreen = ref(route.query.addType == 1)
+const selectScreenRef = ref()
+// 共享屏幕
 const shareScreenClickHandler = () => {
+    if(shareScreen.value) {
+        mitter.emit('shareScreen', '')
+        shareScreen.value = false
+        return
+    }
 
+    selectScreenRef.value.show()
 }
+
+const shareScreenHandler = () => {
+    shareScreen.value = true
+}
+
+onMounted(() => {
+    mitter.on("shareScreen", shareScreenHandler)
+})
+
+onUnmounted(() => {
+    mitter.off("shareScreen", shareScreenHandler)
+})
 
 </script>
 
