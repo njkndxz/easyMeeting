@@ -1,7 +1,8 @@
 <template>
     <div :class="['member-list', LIST_MAP[layoutType]]" :style="gridStyle">
         <div :class="['member-item', currentSelectUserId == userInfoStore.userInfo.userId ? 'active' : '', proxy.Utils.isEmpty(screenId) ? 'member-my' : '', LAYOUT_MAP[layoutType]]"
-            v-for="(item, index) in memberList" :key="index">
+            v-for="(item, index) in memberList" :key="index"
+            @click="selectMember(userInfoStore.userInfo.userId, userInfoStore.userInfo.nickName, userInfoStore.userInfo.sex, (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) || !proxy.Utils.isEmpty(screenId))">
             <div class="video-panel"
                 v-show="(props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen || !proxy.Utils.isEmpty(screenId))">
                 <video :id="`member_${userInfoStore.userInfo.userId}`" ref="localVideoRef" autoplay playsinline loop
@@ -20,7 +21,8 @@
             </div>
         </div>
         <div :class="['member-item', currentSelectUserId == item.userId ? 'active' : '', proxy.Utils.isEmpty(screenId) ? 'member-my' : '', LAYOUT_MAP[layoutType]]"
-            v-for="(item, index) in memberList" :key="index">
+            v-for="(item, index) in memberList" :key="index"
+            @click="selectMember(item.userId, item.nickName, item.sex, item.openVideo)">
             <div class="video-panel"
                 v-show="(props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen || !proxy.Utils.isEmpty(screenId))">
                 <video :id="`member_${item.userId}`" autoplay playsinline loop></video>
@@ -459,13 +461,13 @@ const sendOpenVideoChangeMessage = async (openVideo) => {
         }
     })
 
-    if(!result) {
+    if (!result) {
         return
     }
 }
 
 const memberVideoChagne = (sendUserId, openVideo) => {
-    if(sendUserId == useUserInfoStore.userInfo.userId) {
+    if (sendUserId == useUserInfoStore.userInfo.userId) {
         return
     }
 
@@ -475,7 +477,7 @@ const memberVideoChagne = (sendUserId, openVideo) => {
 
     member.openVideo = openVideo
 
-    if(currentSelectUserId.value == member.userId) {
+    if (currentSelectUserId.value == member.userId) {
         emit('selectMember', {
             srcObject: document.querySelector('#member_' + member.userId).srcObject,
             userId: member.userId,
@@ -503,7 +505,7 @@ const cameraSwitchHandler = async (open) => {
         memberList.value.forEach(member => {
             const pc = peerConnectionMap.get(member.userId)
             const sender = pc.getSenders().forEach(sender => {
-                if(sender.track && sender.track.kind == 'video') {
+                if (sender.track && sender.track.kind == 'video') {
                     sender.replaceTrack(videoTrack)
                 }
             })
@@ -515,7 +517,7 @@ const cameraSwitchHandler = async (open) => {
     }
 
     // 选中操作
-    if(currentSelectUserId.value && userInfoStore.userInfo.userId) {
+    if (currentSelectUserId.value && userInfoStore.userInfo.userId) {
         emit('selectMember', {
             srcObject: localVideoRef.value.srcObject,
             userId: userInfoStore.userInfo.userId,
@@ -531,10 +533,10 @@ const shareScreenHandler = async (_screenId) => {
     sendOpenVideoChangeMessage((props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) || !proxy.Utils.isEmpty(_screenId))
     const oldScreenId = screenId.value
     screenId.value = _screenId
-    if(!proxy.Utils.isEmpty(_screenId) && (!screenStream || oldScreenId !== _screenId)) {
+    if (!proxy.Utils.isEmpty(_screenId) && (!screenStream || oldScreenId !== _screenId)) {
         await initLocalScreenStream()
         localStream = screenStream
-    } else if(proxy.Utils.isEmpty(_screenId) && props.deviceInfo.cameraOpen) {
+    } else if (proxy.Utils.isEmpty(_screenId) && props.deviceInfo.cameraOpen) {
         localStream = cameraStream
     }
 
@@ -543,7 +545,7 @@ const shareScreenHandler = async (_screenId) => {
     memberList.value.forEach(async (member) => {
         const peerConnection = peerConnectionMap.get(member.userId)
         peerConnection.getSenders().forEach(sender => {
-            if(sender.track && sender.track.kind == 'video') {
+            if (sender.track && sender.track.kind == 'video') {
                 sender.replaceTrack(videoTrack)
             } else {
                 sender.track.enabled = false
@@ -551,7 +553,7 @@ const shareScreenHandler = async (_screenId) => {
         })
     })
 
-    if(currentSelectUserId.value === userInfoStore.userInfo.userId) {
+    if (currentSelectUserId.value === userInfoStore.userInfo.userId) {
         emit('selectMember', {
             srcObject: localStream,
             userId: userInfoStore.userInfo.userId,
@@ -562,10 +564,48 @@ const shareScreenHandler = async (_screenId) => {
     }
 }
 
+const layoutChangeHandler = (type) => {
+    if (layoutType.value === type) {
+        return
+    }
+
+    layoutType.value = type
+
+    if (type !== 0 && !currentSelectUserId.value) {
+        currentSelectUserId.value = userInfoStore.userInfo.userId
+        emit('selectMember', {
+            srcObject: localVideoRef.value.srcObject,
+            userId: userInfoStore.userInfo.userId,
+            nickName: userInfoStore.userInfo.nickName,
+            sex: userInfoStore.userInfo.sex,
+            openVideo: (props.deviceInfo.cameraEnable && props.deviceInfo.cameraOpen) || !proxy.Utils.isEmpty(screenId.value)
+        })
+    }
+}
+
+const selectMember = async (userId, nickName, sex, openVideo) => {
+    if (layoutType.value == 0) {
+        return
+    }
+
+    if (currentSelectUserId.value !== userId) {
+        emit('selectMember', {
+            srcObject: document.querySelector('#member_' + userId).srcObject,
+            userId,
+            nickName,
+            sex,
+            openVideo
+        })
+    }
+
+    currentSelectUserId.value = userId
+}
+
 onMounted(() => {
     mitter.on('shareScreen', shareScreenHandler)
     mitter.on('micSwitch', micSwitchHandler)
     mitter.on('cameraSwitch', cameraSwitchHandler)
+    mitter.on('layoutChange', layoutChangeHandler)
     initMeetingListener()
     initLocalStream()
 })
@@ -574,6 +614,7 @@ onUnmounted(() => {
     mitter.on('shareScreen', shareScreenHandler)
     mitter.off('micSwitch', micSwitchHandler)
     mitter.off('cameraSwitch', cameraSwitchHandler)
+    mitter.off('layoutChange', layoutChangeHandler)
 })
 
 

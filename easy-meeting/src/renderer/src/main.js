@@ -19,7 +19,7 @@ import Header from "@/components/Header.vue"
 import TitleBar from '@/components/TitleBar.vue'
 import NoData from '@/components/NoData.vue'
 import Dialog from '@/components/Dialog.vue'
-
+import Avatar from '.@/components/Avatar.vue'
 
 import { createPinia } from 'pinia'
 const pinia = createPinia()
@@ -33,7 +33,7 @@ app.component("Header", Header)
 app.component("TitleBar", TitleBar)
 app.component("NoData", NoData)
 app.component("Dialog", Dialog)
-
+app.component("Avatar", Avatar)
 
 app.config.globalProperties.Request = request
 app.config.globalProperties.Api = Api
@@ -41,6 +41,7 @@ app.config.globalProperties.Utils = Utils
 app.config.globalProperties.Verify = Verify
 app.config.globalProperties.Confirm = Confirm
 app.config.globalProperties.Alert = Alert
+app.config.globalProperties.imageAccept = ".jpg,.png,.gif,.bmp,.webp"
 
 app.mount('#app')
 
