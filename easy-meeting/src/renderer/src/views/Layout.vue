@@ -3,13 +3,8 @@
         <div class="left">
             <div class="top-panel">
                 <div class="avatar">
-                    <Avatar
-                        ref="avatarRef"
-                        :width="30"
-                        :avatar="userInfoStore.userInfo.avatar"
-                        :update="true"
-                        @click="showUserInfo"
-                    ></Avatar>
+                    <Avatar ref="avatarRef" :width="30" :avatar="userInfoStore.userInfo.avatar" :update="true"
+                        @click="showUserInfo"></Avatar>
                 </div>
                 <div class="top-menus">
                     <div :class="['menu-item', item.codes.includes(route.meta.code) ? 'active' : '']"
@@ -45,11 +40,13 @@ import { getCurrentInstance, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { useContactStore } from '@/stores/UserContactStore'
+import { useMeetingStore } from '@/stores/MeetingStore'
 import { mitter } from '@/eventbus/eventBus'
 import UpdateUser from './UpdateUser.vue'
 
 const contactStore = useContactStore()
 const userInfoStore = useUserInfoStore()
+const meetingStore = useMeetingStore()
 
 const { proxy } = getCurrentInstance()
 const router = useRouter()
@@ -102,6 +99,28 @@ const jumpMenu = (menu) => {
     router.push(menu.path)
 }
 
+const acceptInvite = async (meetingId) => {
+    let result = await proxy.Request({
+        url: proxy.Api.acceptInvite,
+        params: {
+            meetingId
+        }
+    })
+
+    if (!result) {
+        return
+    }
+
+    window.electron.ipcRenderer.send("openWindow", {
+        title: '会议详情',
+        windowId: 'meeting',
+        path: '/meeting',
+        width: 1310,
+        height: 800,
+        maximizable: true
+    })
+}
+
 const listenMessage = () => {
     window.electron.ipcRenderer.on("mainMessage", (e, messageObj) => {
         console.log("收到消息", messageObj)
@@ -118,9 +137,43 @@ const listenMessage = () => {
                     result = "已拒绝你的申请"
                 } else if (messageObj.messageContent == 3) {
                     result = "已将你拉黑"
-                } 
+                }
                 proxy.Alert(`【${messageObj.sendUserNickName}${result}】`)
                 break
+            case 1://加入会议
+                const newMember = messageObj.messageContent.newMember
+                if (newMember.userId === userInfoStore.userInfo.userId) {
+                    meetingStore.updateMeeting(true)
+                }
+                break;
+            case 9://邀请入会
+                if (meetingStore.inMeeting) {
+                    return
+                }
+                const { meetingName, meetingId, inviteUserName } = JSON.parse(messageObj.messageContent)
+                proxy.Confirm({
+                    message: `【${inviteUserName}】邀请你加入会议【${meetingName}】`,
+                    okText: '接受邀请',
+                    cancelText: '拒绝',
+                    okfun: () => {
+                        acceptInvite(meetingId)
+                    }
+                })
+                break;
+            case 3://退出会议
+                const { exitStatus, exitUserId } = JSON.parse(messageObj.messageContent)
+                // 3是踢出会议 4是被拉黑 2是自己退出
+                if((exitStatus == 3 || exitStatus == 4) && exitUserId == userInfoStore.userInfo.userId) {
+                    proxy.Confirm({
+                        message: '你被强制退出会议了',
+                        showCancelBtn: false
+                    })
+
+                    if(exitStatus == 2 || exitStatus == 4 || exitStatus == 3) {
+                        meetingStore.updateMeeting(false)
+                    }
+                }
+                break;
             default:
                 break
         }

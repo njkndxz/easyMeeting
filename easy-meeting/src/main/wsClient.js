@@ -70,6 +70,13 @@ export const connectWs = () => {
                 }
                 mainWindow.webContents.send("mainMessage", data)
                 break;
+            case 9: //邀请入会
+            case 10://被强制退出
+                if(!mainWindow) {
+                    return
+                }
+                mainWindow.webContents.send("mainMessage", data)
+                break;
             default:
                 break;
         }

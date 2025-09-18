@@ -18,8 +18,13 @@
                         </div>
                     </div>
                 </div>
+
+                <SplitLine v-show="memberOpened || chatOpened" :initWidth="initRightWidth" @widthChange="widthChange"></SplitLine>
+                <div v-show="memberOpened || chatOpened" :style="{width: rightWidth + 'px'}">
+                    <MemberPanel v-show="memberOpened" ref="memberPanelRef"></MemberPanel>
+                </div>
             </div>
-            <Footer :deviceInfo="deviceInfo"></Footer>
+            <Footer :deviceInfo="deviceInfo" @openChat="openChatHandler" @openMember="openMemberHandler"></Footer>
         </template>
         <template v-else>
             <div class="check-env">正在检查系统环境...</div>
@@ -33,8 +38,10 @@ import { useRouter, useRoute } from 'vue-router'
 import Header from './Header.vue'
 import Footer from './Footer.vue'
 import MemberList from './MemberList.vue'
+import SplitLine from './SplitLine.vue'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
+import MemberPanel from '../../member/MemberPanel.vue'
 
 const userInfoStore = useUserInfoStore()
 
@@ -139,6 +146,27 @@ onUnmounted(() => {
     mitter.off('shareScreen', shareScreenHandler)
     window.electron.ipcRenderer.removeAllListeners('preCloseWindow')
 })
+
+// 右侧内容
+const initRightWidth = 400
+const rightWidth = ref(initRightWidth)
+const widthChange = (width) => {
+    rightWidth.value = width
+}
+
+const memberOpened = ref(false)
+const chatOpened = ref(false)
+
+const openMemberHandler = () => {
+    memberOpened.value = !memberOpened.value
+    chatOpened.value = false
+}
+
+const openChatHandler = () => {
+    chatOpened.value = !chatOpened.value
+    memberOpened.value = false
+}
+
 </script>
 
 <style lang="scss" scoped>
