@@ -59,7 +59,7 @@ import { useMeetingStore } from '@/stores/MeetingStore'
 import { mitter } from '@/eventbus/eventBus'
 import MicIcon from '@/components/MicIcon.vue'
 import SelectScreen from './SelectScreen.vue'
-import inviteMember from '../../invite/inviteMember.vue'
+import inviteMember from '../invite/inviteMember.vue'
 
 const meetingStore = useMeetingStore()
 
