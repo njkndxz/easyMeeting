@@ -3,7 +3,9 @@
         <div class="chat-panel-title">
             <div class="iconfont icon-chat">聊天</div>
         </div>
-        <div class="chat-list" id="chat-list" ref="chatListRef"></div>
+        <div class="chat-list" id="chat-list" ref="chatListRef">
+            <MessageItem v-for="item in dataSource.list" :data="item"></MessageItem>
+        </div>
 
         <ChatSend :sysSetting="sysSetting"></ChatSend>
     </div>
@@ -15,6 +17,7 @@ import { useMeetingStore } from '@/stores/MeetingStore'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { mitter } from '@/eventbus/eventBus'
 import ChatSend from './ChatSend.vue'
+import MessageItem from './MessageItem.vue'
 
 const userInfoStore = useUserInfoStore()
 const meetingStore = useMeetingStore()
@@ -24,20 +27,33 @@ const router = useRouter()
 const route = useRoute()
 
 const loading = ref(false)
-const dataSource = ref({})
+const dataSource = ref({ list: [] })
 
 const listenMessage = () => {
     window.electron.ipcRenderer.on("chatMessage", async (e, messageObj) => {
+        messageObj.isMe = userInfoStore.userInfo.userId === messageObj.senderUserId
+        dataSource.value.list.push(messageObj)
+    })
+}
 
+const listenUploadProgress = () => {
+    window.electron.ipcRenderer.on("uploadProgress", async (e, { messageId, percent }) => {
+        const message = dataSource.value.list.find(item => item.messageId === messageId)
+        if (!message) {
+            return
+        }
+        message.uploadProgress = percent
     })
 }
 
 onMounted(() => {
     listenMessage()
+    listenUploadProgress()
 })
 
 onUnmounted(() => {
     window.electron.ipcRenderer.removeAllListeners('chatMessage')
+    window.electron.ipcRenderer.removeAllListeners('uploadProgress')
 })
 
 const sysSetting = ref()
@@ -47,7 +63,7 @@ const loadSysSetting = async () => {
         showLoading: false
     })
 
-    if(!result) {
+    if (!result) {
         return
     }
 
@@ -70,19 +86,23 @@ loadSysSetting()
         display: flex;
         align-items: center;
         justify-content: space-between;
+
         .icon-chat {
             display: flex;
             align-items: center;
             font-size: 14px;
+
             &::before {
                 margin-right: 3px;
                 font-size: 20px;
             }
         }
+
         .icon-transfer {
             cursor: pointer;
         }
     }
+
     .chat-list {
         overflow: auto;
         height: calc(100vh 0 345px);

@@ -4,7 +4,9 @@ import { initWs, logout, sendWsData } from "./wsClient"
 import * as store from './store'
 import { startRecording, stopRecording } from "./recording"
 import { getSysSetting, saveSysSetting } from "./sysSetting"
-import { join } from 'path'
+import path, { join } from 'path'
+import FormData from 'form-data'
+import axios from 'axios'  
 
 export const onLoginOrRegister = () => {
     ipcMain.handle("loginOrRegister", (e, isLogin) => {
@@ -243,5 +245,54 @@ export const onSendPeerConnection = () => {
     ipcMain.on('sendPeerConnection', (e, peerData) => {
         peerData.token = store.getData('userInfo')?.token
         sendWsData(JSON.stringify(peerData))
+    })
+}
+
+export const onSelectFile = () => {
+    ipcMain.handle("selectFile", async () => {
+        const {canceled, filePaths} = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+            title: '选择文件',
+            properties: ['openFile'],
+        });
+
+        if(canceled) {
+            return {}
+        }
+
+        const filePath = filePaths[0]
+        const {size} = await fstat.promises.stat(filePath)
+        return {
+            fileName: path.basename(filePath), // 文件名带扩展名
+            fileSize: size, // 文件大小，单位字节
+            filePath
+        }
+    })
+}
+
+export const onUploadChatFile = () => {
+    ipcMain.handle("uploadChatFile", async (e, {uploadUrl,messageId, filePath,sendTime}) => {
+        const meetingWin = getWindow("meeting")
+        const formData = new FormData()
+        formData.append("messageId", messageId)
+        formData.append("sendTime", sendTime)
+        formData.append("file", fstat.createReadStream(filePath))
+        const token = store.getData('userInfo')?.token
+
+        axios.post(uploadUrl, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'token': token,
+                onUploadChatFileProgress: function (progressEvent) {
+                    if(progressEvent.total) {
+                        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                        if(meetingWin) {
+                            meetingWin.webContents.send("uploadChatFileProgress", percent)
+                        }
+                    }
+                }
+            }
+        }).catch(error => {
+            console.error('Error uploading file:', error)
+        })
     })
 }

@@ -70,12 +70,20 @@ export const connectWs = () => {
                 }
                 mainWindow.webContents.send("mainMessage", data)
                 break;
-            case 9: //邀请入会
-            case 10://被强制退出
+            case 9: // 邀请入会
+            case 10:// 被强制退出
                 if(!mainWindow) {
                     return
                 }
                 mainWindow.webContents.send("mainMessage", data)
+                break;
+            case 5: // 文本消息
+            case 6: // 媒体消息
+            case 7: // 媒体消息更新
+                if(!meetingWin) {
+                    return
+                }
+                meetingWin.webContents.send("chatMessage", data)
                 break;
             default:
                 break;
