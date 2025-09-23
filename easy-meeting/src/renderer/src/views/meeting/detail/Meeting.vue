@@ -22,6 +22,7 @@
                 <SplitLine v-show="memberOpened || chatOpened" :initWidth="initRightWidth" @widthChange="widthChange"></SplitLine>
                 <div v-show="memberOpened || chatOpened" :style="{width: rightWidth + 'px'}">
                     <MemberPanel v-show="memberOpened" ref="memberPanelRef"></MemberPanel>
+                    <ChatPanel v-show="chatOpened" ref="chatPanelRef"></ChatPanel>
                 </div>
             </div>
             <Footer :deviceInfo="deviceInfo" @openChat="openChatHandler" @openMember="openMemberHandler"></Footer>
@@ -42,6 +43,7 @@ import SplitLine from './SplitLine.vue'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import MemberPanel from '../../member/MemberPanel.vue'
+import ChatPanel from '../chat/ChatPanel.vue'
 
 const userInfoStore = useUserInfoStore()
 
@@ -162,9 +164,14 @@ const openMemberHandler = () => {
     chatOpened.value = false
 }
 
+const chatPanelRef = ref()
 const openChatHandler = () => {
     chatOpened.value = !chatOpened.value
     memberOpened.value = false
+    meetingStore.updateChatOpen(chatOpened.value)
+    if(chatOpened.value) {
+        chatPanelRef.value.showChatPanel()
+    }
 }
 
 </script>

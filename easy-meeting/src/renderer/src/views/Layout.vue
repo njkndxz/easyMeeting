@@ -163,15 +163,14 @@ const listenMessage = () => {
             case 3://退出会议
                 const { exitStatus, exitUserId } = JSON.parse(messageObj.messageContent)
                 // 3是踢出会议 4是被拉黑 2是自己退出
-                if((exitStatus == 3 || exitStatus == 4) && exitUserId == userInfoStore.userInfo.userId) {
+                if ((exitStatus == 3 || exitStatus == 4) && exitUserId == userInfoStore.userInfo.userId) {
                     proxy.Confirm({
                         message: '你被强制退出会议了',
                         showCancelBtn: false
                     })
-
-                    if(exitStatus == 2 || exitStatus == 4 || exitStatus == 3) {
-                        meetingStore.updateMeeting(false)
-                    }
+                }
+                if (exitStatus == 2 || exitStatus == 4 || exitStatus == 3) {
+                    meetingStore.updateMeeting(false)
                 }
                 break;
             default:

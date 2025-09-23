@@ -43,6 +43,27 @@ const props = defineProps({
         default: {}
     }
 })
+
+const download = async () => {
+    const savePath = await window.electron.ipcRenderer.invoke('download', {
+        url: import.meta.env.VITE_DOMAIN + proxy.Api.downloadFile,
+        fileName: props.data.fileName,
+        messageId: props.data.messageId,
+        sendTime: props.data.sendTime,
+    })
+
+    if(!savePath) {
+        return
+    }
+
+    props.data.downloadProgress = 0
+}
+
+const openLocalFile = () => {
+    window.electron.ipcRenderer.send("openLocalFile", {
+        localFilePath: props.data.localFilePath
+    })
+}
 </script>
 <style lang="scss" scoped>
 .file-panel {

@@ -4,7 +4,12 @@
             <div class="iconfont icon-chat">聊天</div>
         </div>
         <div class="chat-list" id="chat-list" ref="chatListRef">
-            <MessageItem v-for="item in dataSource.list" :data="item"></MessageItem>
+            <DataLoadMoreList ref="dataLoadMoreRef" :loadMoreType="1" :dataSource="dataSource" :loading="loading"
+                @loadData="loadMessage">
+                <template #default="{ data, index }">
+                    <MessageItem :data="data"></MessageItem>
+                </template>
+            </DataLoadMoreList>
         </div>
 
         <ChatSend :sysSetting="sysSetting"></ChatSend>
@@ -18,6 +23,7 @@ import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { mitter } from '@/eventbus/eventBus'
 import ChatSend from './ChatSend.vue'
 import MessageItem from './MessageItem.vue'
+import DataLoadMoreList from '../../../components/DataLoadMoreList.vue'
 
 const userInfoStore = useUserInfoStore()
 const meetingStore = useMeetingStore()
@@ -27,9 +33,45 @@ const router = useRouter()
 const route = useRoute()
 
 const loading = ref(false)
-const dataSource = ref({ list: [] })
+const dataSource = ref({})
 const sortMessage = () => {
     dataSource.value.list.sort((a, b) => (a.messageId - b.messageId))
+}
+
+const dataLoadMoreRef = ref()
+const loadMessage = async () => {
+    if (Object.keys(dataSource.value).length > 0 && dataSource.value.pageNo == dataSource.value.pageTotal) {
+        return
+    }
+
+    loading.value = true
+    let pageNo = dataSource.value.pageNo[0]
+    pageNo++
+    const result = await proxy.Request({
+        url: proxy.Api.loadMessage,
+        params: {
+            pageNo,
+            maxMessageId: pageNo > 1 ? dataSource.value.list[0].messageId : null
+        }
+    })
+    if (!result) {
+        return
+    }
+    loading.value = false
+    const queryMessageList = result.data.list.map(item => {
+        item.isMe = userInfoStore.userInfo.userId == item.sendUserId
+        return item
+    })
+
+    let list = dataSource.value.list || []
+    list.unshift(...queryMessageList)
+    result.data.list = list
+    dataSource.value = result.data
+    sortMessage()
+    if (dataSource.value.pageNo > 1) {
+        await nextTick()
+        dataLoadMoreRef.value.gotoTop()
+    }
 }
 
 const listenMessage = () => {
@@ -44,6 +86,7 @@ const listenMessage = () => {
                 sortMessage()
                 await nextTick()
                 // 滚动到底部
+                dataLoadMoreRef.value.gotoBottom(true)
                 break;
             case 7:
                 const messageItem = dataSource.value.list.find(item => item.messageId == messageObj.messageId)
@@ -69,14 +112,32 @@ const listenUploadProgress = () => {
     })
 }
 
+const listenDownloadProgress = () => {
+    window.electron.ipcRenderer.on("downloadProgress", (e, { messageId, percent, localFilePath }) => {
+        const message = dataSource.value.list.find(item => item.messageId === messageId)
+        if (!message) {
+            return
+        }
+        message.downloadProgress = percent
+        message.localFilePath = localFilePath
+    })
+}
+
+const showChatPanel = async () => {
+    await nextTick()
+    dataLoadMoreRef.value.gotoBottom(true)
+}
+
 onMounted(() => {
     listenMessage()
     listenUploadProgress()
+    listenDownloadProgress()
 })
 
 onUnmounted(() => {
     window.electron.ipcRenderer.removeAllListeners('chatMessage')
     window.electron.ipcRenderer.removeAllListeners('uploadProgress')
+    window.electron.ipcRenderer.removeAllListeners('downloadProgress')
 })
 
 const sysSetting = ref()
@@ -117,6 +178,10 @@ provide("showMedia", (messageId) => {
             mediaList: JSON.stringify(mediaList)
         }
     })
+})
+
+defineExpose({
+    showChatPanel
 })
 </script>
 

@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, desktopCapturer, shell, dialog } from "electron"
+import { ipcMain, BrowserWindow, desktopCapturer, shell, dialog, app } from "electron"
 import { delWindow, getWindow, saveWindow } from "./windowProxy"
 import { initWs, logout, sendWsData } from "./wsClient"
 import * as store from './store'
@@ -6,7 +6,7 @@ import { startRecording, stopRecording } from "./recording"
 import { getSysSetting, saveSysSetting } from "./sysSetting"
 import path, { join } from 'path'
 import FormData from 'form-data'
-import axios from 'axios'  
+import axios from 'axios'
 
 export const onLoginOrRegister = () => {
     ipcMain.handle("loginOrRegister", (e, isLogin) => {
@@ -250,17 +250,17 @@ export const onSendPeerConnection = () => {
 
 export const onSelectFile = () => {
     ipcMain.handle("selectFile", async () => {
-        const {canceled, filePaths} = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+        const { canceled, filePaths } = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow(), {
             title: '选择文件',
             properties: ['openFile'],
         });
 
-        if(canceled) {
+        if (canceled) {
             return {}
         }
 
         const filePath = filePaths[0]
-        const {size} = await fstat.promises.stat(filePath)
+        const { size } = await fstat.promises.stat(filePath)
         return {
             fileName: path.basename(filePath), // 文件名带扩展名
             fileSize: size, // 文件大小，单位字节
@@ -270,7 +270,7 @@ export const onSelectFile = () => {
 }
 
 export const onUploadChatFile = () => {
-    ipcMain.handle("uploadChatFile", async (e, {uploadUrl,messageId, filePath,sendTime}) => {
+    ipcMain.handle("uploadChatFile", async (e, { uploadUrl, messageId, filePath, sendTime }) => {
         const meetingWin = getWindow("meeting")
         const formData = new FormData()
         formData.append("messageId", messageId)
@@ -283,9 +283,9 @@ export const onUploadChatFile = () => {
                 'Content-Type': 'multipart/form-data',
                 'token': token,
                 onUploadChatFileProgress: function (progressEvent) {
-                    if(progressEvent.total) {
+                    if (progressEvent.total) {
                         const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                        if(meetingWin) {
+                        if (meetingWin) {
                             meetingWin.webContents.send("uploadChatFileProgress", percent)
                         }
                     }
@@ -293,6 +293,57 @@ export const onUploadChatFile = () => {
             }
         }).catch(error => {
             console.error('Error uploading file:', error)
+        })
+    })
+}
+
+export const onDownload = () => {
+    ipcMain.handle("download", async (event, { messageId, sendTime, fileName, url }) => {
+        const { filePath } = await dialog.showSaveDialog(BrowserWindow.getFocusedWindow(), {
+            title: "保存文件",
+            defaultPath: path.join(app.getPath('downloads'), fileName),
+            properties: ["createDirectory"]
+        })
+        if (!filePath) {
+            return
+        }
+
+        const suffix = fileName.slice(fileName.lastIndexof("."));
+        downloadFile(messageId, sendTime, suffix, url, filePath);
+        return filePath
+    })
+}
+
+export const downloadFile = async (messageId, sendTime, suffix, url, savePath) => {
+    const meetingWin = getWindow("meeting");
+    return new Promise(async (resolve, reject) => {
+        const response = await axios({
+            method: "post",
+            url,
+            responseType: "stream",
+            data: {
+                messageId,
+                sendTime,
+                suffix,
+                token: store.getData("userInfo")?.token
+            },
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
+            onDownloadProgress: function (progressEvent) {
+                if (progressEvent.total) {
+                    const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                    if (meetingWin) {
+                        meetingWin.webContents.send("downloadProgress", { messageId, percent, localFilePath: savePath })
+                    }
+                }
+            }
+        })
+        const stream = fs.createWriteStream(savePath)
+        response.data.pipe(stream)
+        stream.on("finish", () => {
+            stream.close()
+            resolve()
         })
     })
 }

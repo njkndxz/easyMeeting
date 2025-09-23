@@ -35,6 +35,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { mitter } from '@/eventbus/eventBus'
+import Player from '../../../components/Player.vue'
 
 const userInfoStore = useUserInfoStore()
 const meetingStore = useMeetingStore()
@@ -63,7 +64,7 @@ const options = ref({
     zoomRatio: 0.1,
     zoomOnWheel: false,
 })
-
+const player = ref(null)
 const viewerMy = ref(null)
 const inited = (e) => {
     viewerMy.value = e
@@ -95,12 +96,14 @@ const onWheel = (e) => {
     }
 }
 
+
 const getCurrentFile = () => {
     const curFile = allFileList.value[currentIndex.value]
     const url = proxy.Utils.getResourcePath(curFile)
     currentFile.value = { ...curFile, url }
     if(curFile.fileType == 1) {
         // 视频播放
+        player.value.showPlayer(url)
     }
 }
 
@@ -108,9 +111,19 @@ const next = (index) => {
     if(currentIndex.value + index < 0 || currentIndex.value + index >= allFileList.value.length) {
         return
     }
+    player.value.destoryPlayer()
     currentIndex.value += index
     getCurrentFile()
 }
+
+const download = async () => {
+    await window.electron.ipcRenderer.invoke('download', {
+        url: import.meta.env.VITE_DOMAIN + proxy.Api.downloadFile,
+        fileName: currentFile.value.fileName,
+        messageId: currentFile.value.messageId,
+        sendTime: currentFile.value.sendTime,
+    })
+} 
 
 onMounted(() => {
     window.addEventListener("wheel", onWheel)
