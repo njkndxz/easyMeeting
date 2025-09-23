@@ -7,6 +7,10 @@
                 {{ data.messageContent }}
                 <div class="direct"></div>
             </div>
+
+            <MessageItemMedia v-if="data.messageType == 6 && (data.fileType == 0 || data.fileType == 1)" :data="data">
+            </MessageItemMedia>
+            <MessageItemFile v-if="data.messageType == 6 && data.fileType == 2" :data="data"></MessageItemFile>
         </div>
     </div>
 </template>
@@ -16,6 +20,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { mitter } from '@/eventbus/eventBus'
+import MessageItemMedia from './MessageItemMedia.vue'
+import MessageItemFile from './MessageItemFile.vue'
 
 const userInfoStore = useUserInfoStore()
 const meetingStore = useMeetingStore()

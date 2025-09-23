@@ -11,7 +11,7 @@
     </div>
 </template>
 <script setup>
-import { getCurrentInstance, onMounted, onUnmounted, ref, nextTick } from 'vue'
+import { getCurrentInstance, onMounted, onUnmounted, ref, nextTick, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
@@ -28,11 +28,34 @@ const route = useRoute()
 
 const loading = ref(false)
 const dataSource = ref({ list: [] })
+const sortMessage = () => {
+    dataSource.value.list.sort((a, b) => (a.messageId - b.messageId))
+}
 
 const listenMessage = () => {
     window.electron.ipcRenderer.on("chatMessage", async (e, messageObj) => {
-        messageObj.isMe = userInfoStore.userInfo.userId === messageObj.senderUserId
-        dataSource.value.list.push(messageObj)
+        switch (messageObj.messageType) {
+            case 5:
+            case 6:
+                // 加载未读消息数量
+                meetingStore.addNoReadChatCount()
+                messageObj.isMe = userInfoStore.userInfo.userId === messageObj.senderUserId
+                dataSource.value.list.push(messageObj)
+                sortMessage()
+                await nextTick()
+                // 滚动到底部
+                break;
+            case 7:
+                const messageItem = dataSource.value.list.find(item => item.messageId == messageObj.messageId)
+                if (!messageItem) {
+                    return
+                }
+                messageItem.status = 1
+                messageItem.messageContent = messageObj.messageContent
+                break;
+            default:
+                break;
+        }
     })
 }
 
@@ -71,6 +94,30 @@ const loadSysSetting = async () => {
 }
 loadSysSetting()
 
+provide("showMedia", (messageId) => {
+    const mediaList = dataSource.value.list.filterter(item => {
+        return item.status == 1 && (item.fileType == 0 || item.fileType == 1)
+    }).map(item => {
+        return {
+            messageId: item.messageId + ',',
+            fileType: item.fileType,
+            fileName: item.fileName,
+            sendTime: item.sendTime,
+        }
+    })
+
+    window.electron.ipcRenderer.send("openWindow", {
+        title: '媒体详情',
+        windowId: "media",
+        path: '/showMedia',
+        width: 960,
+        height: 720,
+        data: {
+            currentMessageId: messageId,
+            mediaList: JSON.stringify(mediaList)
+        }
+    })
+})
 </script>
 
 <style lang="scss" scoped>

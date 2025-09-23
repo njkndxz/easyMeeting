@@ -52,8 +52,16 @@ const router = createRouter({
                     meta: {
                         code: "setting"
                     }
-                }
+                },
             ]
+        },
+        {
+            path: "/showMedia",
+            name: "showMedia",
+            component: () => import('@/views/meeting/chat/ShowMedia.vue'),
+            meta: {
+                code: "showMedia"
+            }
         }
     ]
 })
