@@ -173,6 +173,13 @@ const listenMessage = () => {
                     meetingStore.updateMeeting(false)
                 }
                 break;
+            case 4: //结束会议
+                meetingStore.updateMeeting(false)
+                proxy.Confirm({
+                    message: '会议已结束, 你已退出会议',
+                    showCancelBtn: false
+                })
+                break;
             default:
                 break
         }

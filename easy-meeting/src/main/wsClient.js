@@ -57,6 +57,14 @@ export const connectWs = () => {
                     meetingWin.webContents.send("meetingMessage", data)
                 }
                 break;
+            case 4: // 结束会议
+                if(mainWindow) {
+                    mainWindow.webContent.send("mainMessage", data)
+                }
+                if(meetingWin) {
+                    meetingWin.webContent.send("meetingMessage", data)
+                }
+                break;
             case 8: // 好友申请
             case 11: // 用户开启关闭视频
                 if(!meetingWin) {
