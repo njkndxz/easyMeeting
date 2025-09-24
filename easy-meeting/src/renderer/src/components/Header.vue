@@ -1,7 +1,7 @@
 <template>
     <div class="header" :style="{ borderBottom: showBottomBorder ? '1px solid #ddd' : 'none' }">
         <div class="title" v-if="title">{{ title }}</div>
-        <TitleBar :closeType="closeType" :showMax="showMax"></TitleBar>
+        <TitleBar ref="titlebarRef" :closeType="closeType" :showMax="showMax"></TitleBar>
     </div>
 </template>
 
@@ -53,6 +53,15 @@ const props = defineProps({
         type: Boolean,
         default: true
     }
+})
+
+const titlebarRef = ref()
+const close = () => {
+    titlebarRef.value.cuseClose()
+}
+
+defineExpose({
+    close
 })
 </script>
 

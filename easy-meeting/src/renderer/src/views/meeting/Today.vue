@@ -36,11 +36,11 @@
                         <div class="time-info-panel">
                             <div class="time-info">
                                 <div>
-                                    {{ proxy.utils.formatDate2(item.startTime, 'HH:mm') }}~{{
-                                        proxy.utils.timeAddmin(item.startTime, item.duration) }}
+                                    {{ proxy.Utils.formatDate2(item.startTime, 'HH:mm') }}~{{
+                                        proxy.Utils.timeAddmin(item.startTime, item.duration) }}
                                 </div>
                                 <div class="point">·</div>
-                                <div>{{ proxy.utils.formatMeetingNo(item.meetingId) }}</div>
+                                <div>{{ proxy.Utils.formatMeetingNo(item.meetingId) }}</div>
                             </div>
                             <div class="op-panel">
                                 <el-button type="danger" size="small" @click="delMeeting(item)">删除</el-button>
@@ -55,15 +55,17 @@
     </div>
 
     <MeetingShare ref="meetingShareRef"></MeetingShare>
+    <AddMeeting ref="addMeetingRef" @joinMeeting="joinMeetingHandler"/>
 </template>
 
 <script setup>
-import { getCurrentInstance, ref } from 'vue'
+import { getCurrentInstance, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import { mitter } from '@/eventbus/eventBus'
 import MeetingShare from './history/MeetingShare.vue'
+import AddMeeting from './AddMeeting.vue'
 
 const userInfoStore = useUserInfoStore()
 const meetingStore = useMeetingStore()
@@ -72,6 +74,21 @@ const router = useRouter()
 const route = useRoute()
 
 const currentMeeting = ref({})
+const todayMeetingList = ref([])
+const loadTodayMeeting = async () => {
+    let result = await proxy.Request({
+        url: proxy.Api.loadTodayMeeting
+    })
+
+    if (!result) {
+        return
+    }
+
+    todayMeetingList.value = result.data.filter((item) => {
+        return item.meetingId !== currentMeeting.value.meetingId
+    })
+}
+
 const getCurrentMeeting = async () => {
     const result = await proxy.Request({
         url: proxy.Api.getCurrentMeeting
@@ -82,21 +99,7 @@ const getCurrentMeeting = async () => {
     }
 
     currentMeeting.value = result.data || {}
-}
-
-const todayMeetingList = ref([])
-const loadTodayMeeting = async () => {
-    let result = await proxy.Request({
-        url: proxy.Api.loadTodayMeeting
-    })
-
-    if(!result) {
-        return
-    }
-
-    todayMeetingList.value = result.data.filter((item) => {
-        return item.meetingId !== currentMeeting.value.meetingId
-    })
+    loadTodayMeeting()
 }
 
 const meetingShareRef = ref()
@@ -115,7 +118,7 @@ const finishMeeting = () => {
                 }
             })
 
-            if(!result) {
+            if (!result) {
                 return
             }
             currentMeeting.value = {}
@@ -123,9 +126,55 @@ const finishMeeting = () => {
     })
 }
 
+const delMeeting = (item) => {
+    proxy.Confirm({
+        message: '确定要删除会议吗?',
+        okfun: async () => {
+            let result = await proxy.Request({
+                url: proxy.Api.delMeetingReserveByUser,
+                params: {
+                    meetingId: item.meetingId
+                }
+            })
+
+            if(!result) {
+                return
+            }
+
+            loadTodayMeeting()
+        }
+    })
+}
+
+const addMeetingRef = ref()
+const joinMeeting = (item) => {
+    addMeetingRef.value.show({meetingId: item.meetingId})
+}
+const joinMeetingHandler = () => {
+    window.electron.ipcRenderer.send('openWindow', {
+        title: '会议详情',
+        windowId: 'meeting',
+        path: '/meeting',
+        width: 1310,
+        height: 800,
+        maximizable: true,
+        resizable: false
+    })
+}
+
 watch(() => meetingStore.lastUpdate, (newVal, oldVal) => {
     getCurrentMeeting()
 }, { immediate: true, deep: true })
+
+onMounted(() => {
+    window.electron.ipcRenderer.on("windowCommunication", (e, data) => {
+        loadTodayMeeting()
+    })
+})
+
+onUnmounted(() => {
+    window.electron.ipcRenderer.removeAllListeners("windowCommunication")
+})
 </script>
 
 <style lang="scss" scoped>

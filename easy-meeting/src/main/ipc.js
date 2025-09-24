@@ -347,3 +347,12 @@ export const downloadFile = async (messageId, sendTime, suffix, url, savePath) =
         })
     })
 }
+
+export const onWindowCommunication = () => {
+    ipcMain.on("windowCommunication", (e, { windowId, data }) => {
+        const window = getWindow(windowId)
+        if(window) {
+            window.webContents.send("windowCommunication", data)
+        }
+    })
+}

@@ -1,7 +1,7 @@
 <template>
     <Dialog :show="dialogconfig.show" :title="dialogconfig.title" :buttons="dialogconfig.buttons" width="400px"
         :showCancel="false" @close="dialogconfig.show = false">
-        <div>#会议号:{{ proxy.utils.formatMeetingNo(meetingInfo.meetingNo) }}</div>
+        <div>#会议号:{{ proxy.Utils.formatMeetingNo(meetingInfo.meetingNo) }}</div>
         <div>#密&nbsp;&nbsp;&nbsp;码:{{ meetingInfo.password || '无密码' }}</div>
         <div class="copy-btn">
             <el-button type="primary" @click="copyText">复制会议信息</el-button>
