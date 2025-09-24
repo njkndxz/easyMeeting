@@ -62,7 +62,39 @@ const router = createRouter({
             meta: {
                 code: "showMedia"
             }
-        }
+        },
+        {
+            path: "/meetingReserve",
+            name: "meetingReserve",
+            component: () => import('@/views/meeting/history/MeetingReserve.vue'),
+            meta: {
+                code: "meetingReserve"
+            }
+        },
+        {
+            path: "/meetingAll",
+            name: "meetingAll",
+            component: () => import('@/views/meeting/history/MeetingAll.vue'),
+            meta: {
+                code: "meetingAll"
+            }
+        },
+        {
+            path: "/meetingMember",
+            name: "meetingMember",
+            component: () => import('@/views/meeting/history/MeetingMember.vue'),
+            meta: {
+                code: "meetingMember"
+            }
+        },
+        {
+            path: "/meetingMessage",
+            name: "meetingMessage",
+            component: () => import('@/views/meeting/history/MeetingMessage.vue'),
+            meta: {
+                code: "meetingMessage"
+            }
+        },
     ]
 })
 

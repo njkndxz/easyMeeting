@@ -70,6 +70,17 @@ const addMeeting = (addType) => {
     addMeetingRef.value.show({ addType })
 }
 
+const reserveMeeting = () => {
+     window.electron.ipcRenderer.send("openWindow", {
+        title: '预定会议',
+        windowId: 'meetingReserve',
+        path: '/meetingReserve',
+        width: 375,
+        height: 700,
+        maximizable: false
+    })
+}
+
 </script>
 
 <style lang="scss" scoped>

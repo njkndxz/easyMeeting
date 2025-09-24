@@ -35,7 +35,20 @@ const route = useRoute()
 const loading = ref(false)
 const dataSource = ref({})
 const sortMessage = () => {
-    dataSource.value.list.sort((a, b) => (a.messageId - b.messageId))
+    dataSource.value.list.sort((a, b) => {
+        const bigA = BigInt(a.messageId)
+        const bigB = BigInt(b.messageId)
+
+        if(bigA < bigB) {
+            return -1
+        }
+
+        if (bigA > bigB) {
+            return 1
+        }
+
+        return 0
+    })
 }
 
 const dataLoadMoreRef = ref()
@@ -156,7 +169,7 @@ const loadSysSetting = async () => {
 loadSysSetting()
 
 provide("showMedia", (messageId) => {
-    const mediaList = dataSource.value.list.filterter(item => {
+    const mediaList = dataSource.value.list.filter(item => {
         return item.status == 1 && (item.fileType == 0 || item.fileType == 1)
     }).map(item => {
         return {

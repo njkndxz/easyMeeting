@@ -162,6 +162,18 @@ const joinMeetingHandler = () => {
     })
 }
 
+const meetingHistory = () => {
+    window.electron.ipcRenderer.send('openWindow', {
+        title: '全部会议',
+        windowId: 'meetingAll',
+        path: '/meetingAll',
+        width: 600,
+        height: 665,
+        maximizable: false,
+        data: {}
+    })
+}
+
 watch(() => meetingStore.lastUpdate, (newVal, oldVal) => {
     getCurrentMeeting()
 }, { immediate: true, deep: true })
