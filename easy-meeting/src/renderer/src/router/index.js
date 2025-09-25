@@ -119,7 +119,23 @@ const router = createRouter({
                     meta: {
                         code: "userList"
                     }
-                }
+                },
+                {
+                    path: "/meetingMange",
+                    name: "meetingMange",
+                    component: () => import('@/views/admin/Meeting.vue'),
+                    meta: {
+                        code: "meetingMange"
+                    }
+                },
+                {
+                    path: "/appUpdate",
+                    name: "appUpdate",
+                    component: () => import('@/views/admin/AppUpdate.vue'),
+                    meta: {
+                        code: "appUpdate"
+                    }
+                },
             ]
         },
     ]

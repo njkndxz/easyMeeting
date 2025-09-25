@@ -32,3 +32,7 @@ export const password = (rule, value, callback) => {
 export const number = (rule, value, callback) => {
     return verify(rule, value, regs.number, callback)
 }
+
+export const version = (rule, value, callback) => {
+    return verify(rule, value, regs.version, callback)
+}
