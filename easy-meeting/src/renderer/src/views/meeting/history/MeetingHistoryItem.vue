@@ -22,7 +22,6 @@
                         class="iconfont icon-narrow-right"></span></span>
             </div>
         </div>
-
     </div>
 </template>
 <script setup>

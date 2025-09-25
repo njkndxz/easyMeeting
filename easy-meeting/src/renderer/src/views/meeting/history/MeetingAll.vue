@@ -7,6 +7,7 @@
         </el-tabs>
     </div>
     <MeetingHistory v-if="activeName == 'history'"></MeetingHistory>
+    <MeetingReserve v-if="activeName == 'reserve'"></MeetingReserve>
 </template>
 <script setup>
 import { getCurrentInstance, ref, onMounted, onUnmounted } from 'vue'
@@ -14,6 +15,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { useUserInfoStore } from '@/stores/UserInfoStore'
 import MeetingHistory from './MeetingHistory.vue'
+import MeetingReserve from './MeetingReserve.vue'
 
 const userInfoStore = useUserInfoStore()
 const meetingStore = useMeetingStore()
