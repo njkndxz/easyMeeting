@@ -93,6 +93,14 @@ const leftBottomMenus = ref([
 
 const jumpMenu = (menu) => {
     if (menu.btnType === "admin") {
+        // 去管理后台
+        window.electron.ipcRenderer.send('openWindow', {
+            title: '管理后台',
+            windowId: 'adminWindow',
+            path: '/admin',
+            width: 1310,
+            height: 800
+        })
         return
     }
 
@@ -146,20 +154,6 @@ const listenMessage = () => {
                     meetingStore.updateMeeting(true)
                 }
                 break;
-            case 9://邀请入会
-                if (meetingStore.inMeeting) {
-                    return
-                }
-                const { meetingName, meetingId, inviteUserName } = JSON.parse(messageObj.messageContent)
-                proxy.Confirm({
-                    message: `【${inviteUserName}】邀请你加入会议【${meetingName}】`,
-                    okText: '接受邀请',
-                    cancelText: '拒绝',
-                    okfun: () => {
-                        acceptInvite(meetingId)
-                    }
-                })
-                break;
             case 3://退出会议
                 const { exitStatus, exitUserId } = JSON.parse(messageObj.messageContent)
                 // 3是踢出会议 4是被拉黑 2是自己退出
@@ -180,8 +174,28 @@ const listenMessage = () => {
                     showCancelBtn: false
                 })
                 break;
+            case 9://邀请入会
+                if (meetingStore.inMeeting) {
+                    return
+                }
+                const { meetingName, meetingId, inviteUserName } = JSON.parse(messageObj.messageContent)
+                proxy.Confirm({
+                    message: `【${inviteUserName}】邀请你加入会议【${meetingName}】`,
+                    okText: '接受邀请',
+                    cancelText: '拒绝',
+                    okfun: () => {
+                        acceptInvite(meetingId)
+                    }
+                })
+                break;
+            case 10: // 强制退出
+                proxy.Alert('你被管理员强制退出', async () => {
+                    await window.electron.ipcRenderer.invoke('logout')
+                    router.push('/')
+                })
+                break;
             default:
-                break
+                break;
         }
     })
 }

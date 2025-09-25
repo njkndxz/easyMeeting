@@ -20,6 +20,7 @@ import TitleBar from '@/components/TitleBar.vue'
 import NoData from '@/components/NoData.vue'
 import Dialog from '@/components/Dialog.vue'
 import Avatar from '.@/components/Avatar.vue'
+import Table from './components/Table.vue'
 import DataLoadMoreList from './components/DataLoadMoreList.vue'
 
 import { createPinia } from 'pinia'
@@ -35,6 +36,7 @@ app.component("TitleBar", TitleBar)
 app.component("NoData", NoData)
 app.component("Dialog", Dialog)
 app.component("Avatar", Avatar)
+app.component("Table", Table)
 app.component("DataLoadMoreList", DataLoadMoreList)
 
 app.config.globalProperties.Request = request

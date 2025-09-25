@@ -95,6 +95,33 @@ const router = createRouter({
                 code: "meetingMessage"
             }
         },
+        {
+            path: "/meetingReserve",
+            name: "meetingReserve",
+            component: () => import('@/views/meeting/history/MeetingReserve.vue'),
+            meta: {
+                code: "meetingReserve"
+            }
+        },
+        {
+            path: "/admin",
+            name: "admin",
+            component: () => import('@/views/admin/AdminLayout.vue'),
+            meta: {
+                code: "admin"
+            },
+            redirect: '/userList',
+            children: [
+                {
+                    path: "/userList",
+                    name: "userList",
+                    component: () => import('@/views/admin/UseList.vue'),
+                    meta: {
+                        code: "userList"
+                    }
+                }
+            ]
+        },
     ]
 })
 
