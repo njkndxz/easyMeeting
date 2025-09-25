@@ -7,6 +7,7 @@ import { getSysSetting, saveSysSetting } from "./sysSetting"
 import path, { join } from 'path'
 import FormData from 'form-data'
 import axios from 'axios'
+import { downloadUpdate } from "./appUpdate"
 
 export const onLoginOrRegister = () => {
     ipcMain.handle("loginOrRegister", (e, isLogin) => {
@@ -354,5 +355,11 @@ export const onWindowCommunication = () => {
         if(window) {
             window.webContents.send("windowCommunication", data)
         }
+    })
+}
+
+export const  onDownloadUpdate = () => {
+    ipcMain.on("downloadUpdate", (e, { downloadUrl, id, fileName }) => {
+        downloadUpdate({downloadUrl, id, fileName})
     })
 }

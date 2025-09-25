@@ -33,6 +33,7 @@
     </div>
 
     <UpdateUser ref="updateUserRef" @reloadInfo="reloadInfoHandler"></UpdateUser>
+    <AppUpdate></AppUpdate>
 </template>
 
 <script setup>
@@ -43,6 +44,8 @@ import { useContactStore } from '@/stores/UserContactStore'
 import { useMeetingStore } from '@/stores/MeetingStore'
 import { mitter } from '@/eventbus/eventBus'
 import UpdateUser from './UpdateUser.vue'
+import AppUpdate from '../AppUpdate.vue'
+import { ElLoading } from 'element-plus'
 
 const contactStore = useContactStore()
 const userInfoStore = useUserInfoStore()
@@ -231,12 +234,50 @@ watch(() => contactStore.updateLastUpdateTime, (newVal, oldVal) => {
     loadContactApplyCount()
 }, { immediate: true, deep: true })
 
+// ws断开重连
+let reconnectLoading = null
+const listenReconnect = () => {
+    window.electron.ipcRenderer.on('reconnect', (e, connectSuccess) => {
+        if (reconnectLoading == null && !connectSuccess) {
+            reconnectLoading = ElLoading.service({
+                lock: true,
+                text: '与服务器断开连接，正在重连......',
+                background: 'rgba(0, 0, 0, 0.7)',
+            });
+        }
+
+        if (connectSuccess) {
+            proxy.Message.success('重连成功')
+
+            if (reconnectLoading != null) {
+                reconnectLoading.close()
+                reconnectLoading = null
+            }
+        }
+    })
+}
+
+// 监听退出登录
+const listenLogout = () => [
+    window.electron.ipcRenderer.on('logout', (e, connectSuccess) => {
+        if (reconnectLoading != null) {
+            reconnectLoading.close()
+            reconnectLoading = null
+        }
+        router.push('/')
+    })
+]
+
 onMounted(() => {
     listenMessage()
+    listenReconnect()
+    listenLogout()
 })
 
 onUnmounted(() => {
     window.electron.ipcRenderer.removeAllListeners('mainMessage')
+    window.electron.ipcRenderer.removeAllListeners('reconnect')
+    window.electron.ipcRenderer.removeAllListeners('logout')
 })
 
 </script>

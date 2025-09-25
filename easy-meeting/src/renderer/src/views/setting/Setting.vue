@@ -95,7 +95,7 @@ const logout = () => {
         message: '确定要退出吗?',
         okfun: async () => {
             let result = await proxy.Request({
-                url: proxy.Api.logqut
+                url: proxy.Api.logout
             })
             if (!result) {
                 return
